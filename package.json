@@ -1,0 +1,12 @@
+{
+  "name": "kaksam-platform",
+  "private": true,
+  "workspaces": ["apps/*"],
+  "scripts": {
+    "dev:api": "npm run start:dev --workspace=@kaksam/api",
+    "dev:admin": "npm run dev --workspace=@kaksam/admin",
+    "prisma:migrate": "npm run prisma:migrate --workspace=@kaksam/api",
+    "prisma:seed": "npm run prisma:seed --workspace=@kaksam/api",
+    "prisma:studio": "npm run prisma:studio --workspace=@kaksam/api"
+  }
+}
