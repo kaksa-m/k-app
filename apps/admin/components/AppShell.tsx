@@ -5,11 +5,31 @@ import { usePathname, useRouter } from 'next/navigation';
 import { ReactNode, useEffect } from 'react';
 import { useAuth, ALLOWED_ROLES } from '../lib/auth-context';
 
-const NAV_ITEMS = [
-  { href: '/dashboard', label: 'Today' },
-  { href: '/students', label: 'Students' },
-  { href: '/teachers', label: 'Teachers' },
-  { href: '/classes', label: 'Classes' },
+interface NavGroup {
+  heading?: string;
+  items: { href: string; label: string }[];
+}
+
+const NAV_GROUPS: NavGroup[] = [
+  { items: [{ href: '/dashboard', label: 'Today' }] },
+  {
+    heading: 'People & academics',
+    items: [
+      { href: '/students', label: 'Students' },
+      { href: '/teachers', label: 'Teachers' },
+      { href: '/classes', label: 'Classes' },
+      { href: '/subjects', label: 'Subjects' },
+    ],
+  },
+  {
+    heading: 'Day to day',
+    items: [
+      { href: '/attendance', label: 'Attendance' },
+      { href: '/classwork', label: 'Classwork' },
+      { href: '/homework', label: 'Homework' },
+      { href: '/announcements', label: 'Announcements' },
+    ],
+  },
 ];
 
 // Wraps every authenticated page: redirects to /login if there's no
@@ -47,21 +67,30 @@ export function AppShell({ children }: { children: ReactNode }) {
           <LogoMark />
           <span className="font-display text-xl uppercase tracking-wide">Kaksam</span>
         </div>
-        <nav className="flex-1 px-3 space-y-1">
-          {NAV_ITEMS.map((item) => {
-            const active = pathname?.startsWith(item.href);
-            return (
-              <Link
-                key={item.href}
-                href={item.href}
-                className={`block rounded px-3 py-2 text-sm font-medium transition-colors ${
-                  active ? 'bg-board-deep text-marigold' : 'text-chalk/80 hover:bg-board-deep hover:text-chalk'
-                }`}
-              >
-                {item.label}
-              </Link>
-            );
-          })}
+        <nav className="flex-1 px-3 space-y-4 overflow-y-auto">
+          {NAV_GROUPS.map((group, gi) => (
+            <div key={gi} className="space-y-1">
+              {group.heading && (
+                <div className="px-3 pt-2 pb-1 font-mono text-[10px] uppercase tracking-widest text-chalk/40">
+                  {group.heading}
+                </div>
+              )}
+              {group.items.map((item) => {
+                const active = pathname?.startsWith(item.href);
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    className={`block rounded px-3 py-2 text-sm font-medium transition-colors ${
+                      active ? 'bg-board-deep text-marigold' : 'text-chalk/80 hover:bg-board-deep hover:text-chalk'
+                    }`}
+                  >
+                    {item.label}
+                  </Link>
+                );
+              })}
+            </div>
+          ))}
         </nav>
         <div className="px-6 py-5 border-t border-white/10 text-xs">
           <div className="font-medium">{user.name ?? user.email}</div>

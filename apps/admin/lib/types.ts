@@ -62,3 +62,73 @@ export interface AdminDashboard {
     sessionsMissingClasswork: number;
   };
 }
+
+export interface AcademicYear {
+  id: string;
+  name: string;
+  startDate: string;
+  endDate: string;
+  isCurrent: boolean;
+}
+
+export interface Subject {
+  id: string;
+  name: string;
+  code: string | null;
+}
+
+export interface ClassSession {
+  id: string;
+  sectionId: string;
+  subjectId: string;
+  teacherId: string;
+  dayOfWeek: number; // 0=Monday..6=Sunday
+  startTime: string;
+  endTime: string;
+  room: string | null;
+  subject?: Subject;
+  teacher?: Teacher;
+  section?: Section & { class: SchoolClass };
+}
+
+export type AttendanceStatus = 'PRESENT' | 'ABSENT' | 'LATE' | 'EXCUSED';
+
+export interface AttendanceRosterEntry {
+  studentId: string;
+  firstName: string;
+  lastName: string;
+  rollNumber: string | null;
+  status: AttendanceStatus | null;
+}
+
+export interface Classwork {
+  id: string;
+  classSessionId: string;
+  date: string;
+  summary: string;
+  createdAt: string;
+}
+
+export interface Homework {
+  id: string;
+  classSessionId: string;
+  assignedDate: string;
+  dueDate: string;
+  title: string;
+  description: string | null;
+}
+
+export type AnnouncementAudience = 'SCHOOL_WIDE' | 'SECTION' | 'STAFF_ONLY';
+
+export interface Announcement {
+  id: string;
+  title: string;
+  body: string;
+  audience: AnnouncementAudience;
+  sectionId: string | null;
+  createdAt: string;
+}
+
+// Days of the week in schema order (0=Monday..6=Sunday) — used to render
+// the dayOfWeek picker consistently across Attendance/Classwork/Homework forms.
+export const DAY_LABELS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
