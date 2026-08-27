@@ -1,6 +1,7 @@
 'use client';
 
 import { FormEvent, useEffect, useState } from 'react';
+import Link from 'next/link';
 import { AppShell } from '../../components/AppShell';
 import { Card, ErrorText, Field, PrimaryButton, Select, TextArea, TextInput } from '../../components/ui';
 import { api, ApiError } from '../../lib/api';
@@ -111,6 +112,15 @@ export default function HomeworkPage() {
             </Select>
           </Field>
         </div>
+        {sectionId && sessions.length === 0 && (
+          <p className="text-xs text-ink-soft font-mono mt-3">
+            No class sessions for this section yet —{' '}
+            <Link href="/timetable" className="text-margin hover:text-marigold-deep underline">
+              add one on the Timetable page
+            </Link>
+            .
+          </p>
+        )}
       </Card>
 
       {classSessionId && (

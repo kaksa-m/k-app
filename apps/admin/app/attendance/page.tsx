@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
+import Link from 'next/link';
 import { AppShell } from '../../components/AppShell';
 import { Card, ErrorText, Field, PrimaryButton, Select, SuccessText, TextInput } from '../../components/ui';
 import { api, ApiError } from '../../lib/api';
@@ -145,7 +146,11 @@ export default function AttendancePage() {
         </div>
         {sectionId && sessions.length === 0 && (
           <p className="text-xs text-ink-soft font-mono mt-3">
-            No class sessions scheduled for this section yet — create one via the API (POST /class-sessions).
+            No class sessions scheduled for this section yet —{' '}
+            <Link href="/timetable" className="text-margin hover:text-marigold-deep underline">
+              add one on the Timetable page
+            </Link>
+            .
           </p>
         )}
       </Card>
