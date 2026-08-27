@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { ReactNode, useEffect } from 'react';
-import { useAuth } from '../lib/auth-context';
+import { useAuth, ALLOWED_ROLES } from '../lib/auth-context';
 
 const NAV_ITEMS = [
   { href: '/dashboard', label: 'Today' },
@@ -20,10 +20,19 @@ export function AppShell({ children }: { children: ReactNode }) {
   const router = useRouter();
 
   useEffect(() => {
-    if (!loading && !user) router.replace('/login');
-  }, [loading, user, router]);
+    if (loading) return;
+    if (!user) {
+      router.replace('/login');
+      return;
+    }
+    if (!ALLOWED_ROLES.includes(user.role)) {
+      // Stale session from before this app was restricted to admins —
+      // log out cleanly rather than letting every API call 403.
+      logout();
+    }
+  }, [loading, user, router, logout]);
 
-  if (loading || !user) {
+  if (loading || !user || !ALLOWED_ROLES.includes(user.role)) {
     return (
       <div className="flex min-h-screen items-center justify-center text-ink-soft font-mono text-sm">
         Loading…

@@ -1,0 +1,31 @@
+# Render Blueprint — deploys apps/api as a persistent Node web service.
+#
+# Usage: in the Render dashboard, "New +" → "Blueprint" → point at this repo.
+# Render reads this file automatically. Env vars marked `sync: false` are
+# secrets you paste in manually after the first deploy (Render won't store
+# them in git).
+#
+# Render injects its own PORT env var at runtime — main.ts already reads
+# PORT from ConfigService with a fallback, so no PORT var is set here on
+# purpose; don't add one or you'll fight Render's own assignment.
+
+services:
+  - type: web
+    name: kaksam-api
+    runtime: node
+    plan: free
+    rootDir: apps/api
+    buildCommand: npm install && npx prisma generate && npm run build
+    # `prisma migrate deploy` applies any pending migrations before the
+    # server starts — safe to run on every deploy (no-op if nothing's new).
+    startCommand: npx prisma migrate deploy && npm run start:prod
+    healthCheckPath: /api/health
+    envVars:
+      - key: DATABASE_URL
+        sync: false # paste the Supabase connection string here
+      - key: JWT_SECRET
+        sync: false # generate with: openssl rand -hex 32
+      - key: JWT_EXPIRES_IN
+        value: 8h
+      - key: CORS_ORIGINS
+        sync: false # e.g. https://kaksam-admin.vercel.app

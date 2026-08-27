@@ -18,5 +18,12 @@
     "forceConsistentCasingInFileNames": true,
     "noFallthroughCasesInSwitch": false,
     "esModuleInterop": true
-  }
+  },
+  // Scoped to src/ only so prisma/seed.ts (compiled separately via
+  // ts-node, see package.json's prisma.seed) doesn't get pulled into
+  // this compile — including it shifts tsc's inferred rootDir up to
+  // apps/api/ and nests output under dist/src/ + dist/prisma/ instead
+  // of a flat dist/.
+  "include": ["src/**/*"],
+  "exclude": ["node_modules", "dist", "test"]
 }

@@ -8,6 +8,7 @@ import { JwtAuthGuard } from './common/guards/jwt-auth.guard';
 import { RolesGuard } from './common/guards/roles.guard';
 
 import { AuthModule } from './auth/auth.module';
+import { HealthModule } from './health/health.module';
 import { AcademicYearsModule } from './academic-years/academic-years.module';
 import { ClassesModule } from './classes/classes.module';
 import { SectionsModule } from './sections/sections.module';
@@ -29,6 +30,7 @@ import { DashboardModule } from './dashboard/dashboard.module';
     PrismaModule,
 
     AuthModule,
+    HealthModule,
     AcademicYearsModule,
     ClassesModule,
     SectionsModule,
