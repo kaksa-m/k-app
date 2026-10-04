@@ -48,30 +48,53 @@ async function main() {
     },
   });
 
-  const academicYear = await prisma.academicYear.create({
-    data: {
-      schoolId: school.id,
-      name: '2026-27',
-      startDate: new Date('2026-06-01'),
-      endDate: new Date('2027-04-30'),
-      isCurrent: true,
-    },
+  const academicYear =
+    (await prisma.academicYear.findFirst({ where: { schoolId: school.id, name: '2026-27' } })) ??
+    (await prisma.academicYear.create({
+      data: {
+        schoolId: school.id,
+        name: '2026-27',
+        startDate: new Date('2026-06-01'),
+        endDate: new Date('2027-04-30'),
+        isCurrent: true,
+      },
+    }));
+
+  await prisma.academicYear.updateMany({
+    where: { schoolId: school.id, id: { not: academicYear.id } },
+    data: { isCurrent: false },
   });
+  await prisma.academicYear.update({ where: { id: academicYear.id }, data: { isCurrent: true } });
 
-  const class8 = await prisma.class.create({ data: { schoolId: school.id, name: 'Class 8', order: 8 } });
+  const class8 =
+    (await prisma.class.findFirst({ where: { schoolId: school.id, name: 'Class 8' } })) ??
+    (await prisma.class.create({ data: { schoolId: school.id, name: 'Class 8', order: 8 } }));
 
-  const section8A = await prisma.section.create({
-    data: {
-      schoolId: school.id,
-      classId: class8.id,
-      academicYearId: academicYear.id,
-      name: 'A',
-      classTeacherId: teacher.id,
-    },
-  });
+  const section8A =
+    (await prisma.section.findFirst({
+      where: { classId: class8.id, academicYearId: academicYear.id, name: 'A' },
+    })) ??
+    (await prisma.section.create({
+      data: {
+        schoolId: school.id,
+        classId: class8.id,
+        academicYearId: academicYear.id,
+        name: 'A',
+        classTeacherId: teacher.id,
+      },
+    }));
 
-  const mathsSubject = await prisma.subject.create({
-    data: { schoolId: school.id, name: 'Mathematics', code: 'MATH' },
+  await prisma.section.update({ where: { id: section8A.id }, data: { classTeacherId: teacher.id } });
+
+  const mathsSubject =
+    (await prisma.subject.findFirst({ where: { schoolId: school.id, name: 'Mathematics' } })) ??
+    (await prisma.subject.create({
+      data: { schoolId: school.id, name: 'Mathematics', code: 'MATH' },
+    }));
+
+  await prisma.class.update({
+    where: { id: class8.id },
+    data: { subjects: { connect: { id: mathsSubject.id } } },
   });
 
   // Today's day-of-week in schema terms (0=Monday..6=Sunday), so the
@@ -79,17 +102,28 @@ async function main() {
   const jsDay = new Date().getDay();
   const todaySchemaDay = jsDay === 0 ? 6 : jsDay - 1;
 
-  const session = await prisma.classSession.create({
-    data: {
-      sectionId: section8A.id,
-      subjectId: mathsSubject.id,
-      teacherId: teacher.id,
-      dayOfWeek: todaySchemaDay,
-      startTime: '09:00',
-      endTime: '09:45',
-      room: 'Room 12',
-    },
-  });
+  const session =
+    (await prisma.classSession.findFirst({
+      where: {
+        sectionId: section8A.id,
+        subjectId: mathsSubject.id,
+        teacherId: teacher.id,
+        dayOfWeek: todaySchemaDay,
+        startTime: '09:00',
+        endTime: '09:45',
+      },
+    })) ??
+    (await prisma.classSession.create({
+      data: {
+        sectionId: section8A.id,
+        subjectId: mathsSubject.id,
+        teacherId: teacher.id,
+        dayOfWeek: todaySchemaDay,
+        startTime: '09:00',
+        endTime: '09:45',
+        room: 'Room 12',
+      },
+    }));
 
   const parentUser = await prisma.user.upsert({
     where: { email: 'parent1@greenvalley.test' },
@@ -102,16 +136,29 @@ async function main() {
     create: { schoolId: school.id, userId: parentUser.id, firstName: 'Ramesh', lastName: 'Kumar' },
   });
 
+  const studentSeeds = [
+    { firstName: 'Aarav', lastName: 'Kumar', rollNumber: '01', parentId: parent.id },
+    { firstName: 'Diya', lastName: 'Patel', rollNumber: '02', parentId: undefined },
+    { firstName: 'Kabir', lastName: 'Singh', rollNumber: '03', parentId: undefined },
+  ];
+
   const students = await Promise.all(
-    [
-      { firstName: 'Aarav', lastName: 'Kumar', rollNumber: '01', parentId: parent.id },
-      { firstName: 'Diya', lastName: 'Patel', rollNumber: '02' },
-      { firstName: 'Kabir', lastName: 'Singh', rollNumber: '03' },
-    ].map((s) =>
-      prisma.student.create({
-        data: { schoolId: school.id, sectionId: section8A.id, ...s },
-      }),
-    ),
+    studentSeeds.map(async (studentSeed) => {
+      const existing = await prisma.student.findFirst({
+        where: { schoolId: school.id, rollNumber: studentSeed.rollNumber },
+      });
+
+      if (existing) {
+        return prisma.student.update({
+          where: { id: existing.id },
+          data: { ...studentSeed, sectionId: section8A.id },
+        });
+      }
+
+      return prisma.student.create({
+        data: { schoolId: school.id, sectionId: section8A.id, ...studentSeed },
+      });
+    }),
   );
 
   await prisma.attendance.createMany({
@@ -123,41 +170,68 @@ async function main() {
     skipDuplicates: true,
   });
 
-  await prisma.classwork.create({
-    data: { classSessionId: session.id, date: new Date(), summary: 'Chapter 4 — Linear Equations, Q1-Q10' },
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const classwork = await prisma.classwork.findFirst({
+    where: { classSessionId: session.id, date: today, summary: 'Chapter 4 — Linear Equations, Q1-Q10' },
   });
+  if (!classwork) {
+    await prisma.classwork.create({
+      data: { classSessionId: session.id, date: today, summary: 'Chapter 4 — Linear Equations, Q1-Q10' },
+    });
+  }
 
-  await prisma.homework.create({
-    data: {
-      classSessionId: session.id,
-      assignedDate: new Date(),
-      dueDate: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000),
-      title: 'Worksheet 4B',
-      description: 'Complete questions 1-15, show your working.',
-    },
+  const dueDate = new Date(Date.now() + 2 * 24 * 60 * 60 * 1000);
+  const homework = await prisma.homework.findFirst({
+    where: { classSessionId: session.id, assignedDate: today, title: 'Worksheet 4B' },
   });
+  if (!homework) {
+    await prisma.homework.create({
+      data: {
+        classSessionId: session.id,
+        assignedDate: today,
+        dueDate,
+        title: 'Worksheet 4B',
+        description: 'Complete questions 1-15, show your working.',
+      },
+    });
+  }
 
-  await prisma.announcement.create({
-    data: {
-      schoolId: school.id,
-      title: 'Independence Day event',
-      body: 'School assembly at 9am, followed by a half day.',
-    },
+  const announcement = await prisma.announcement.findFirst({
+    where: { schoolId: school.id, title: 'Independence Day event' },
   });
+  if (!announcement) {
+    await prisma.announcement.create({
+      data: {
+        schoolId: school.id,
+        title: 'Independence Day event',
+        body: 'School assembly at 9am, followed by a half day.',
+      },
+    });
+  }
 
-  const feeStructure = await prisma.feeStructure.create({
-    data: { schoolId: school.id, name: 'Tuition — Class 8', amount: 4500, frequency: 'monthly' },
-  });
+  const feeStructure =
+    (await prisma.feeStructure.findFirst({
+      where: { schoolId: school.id, name: 'Tuition — Class 8' },
+    })) ??
+    (await prisma.feeStructure.create({
+      data: { schoolId: school.id, name: 'Tuition — Class 8', amount: 4500, frequency: 'monthly' },
+    }));
 
-  await prisma.invoice.create({
-    data: {
-      schoolId: school.id,
-      studentId: students[0].id,
-      feeStructureId: feeStructure.id,
-      amountDue: 4500,
-      dueDate: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000),
-    },
+  const invoice = await prisma.invoice.findFirst({
+    where: { schoolId: school.id, studentId: students[0].id, feeStructureId: feeStructure.id },
   });
+  if (!invoice) {
+    await prisma.invoice.create({
+      data: {
+        schoolId: school.id,
+        studentId: students[0].id,
+        feeStructureId: feeStructure.id,
+        amountDue: 4500,
+        dueDate: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000),
+      },
+    });
+  }
 
   console.log('Seed complete.');
   console.log('  School admin login:  admin@greenvalley.test / password123');
