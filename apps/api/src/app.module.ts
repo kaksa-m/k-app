@@ -27,6 +27,9 @@ import { PlatformModule } from './platform/platform.module';
 import { ParentPortalModule } from './parent-portal/parent-portal.module';
 import { ExamsModule } from './exams/exams.module';
 import { StudentPortalModule } from './student-portal/student-portal.module';
+import { NotificationsModule } from './notifications/notifications.module';
+import { AuditLogModule } from './audit-log/audit-log.module';
+import { SchoolSettingsModule } from './school-settings/school-settings.module';
 
 @Module({
   imports: [
@@ -54,6 +57,9 @@ import { StudentPortalModule } from './student-portal/student-portal.module';
     ParentPortalModule,
     ExamsModule,
     StudentPortalModule,
+    NotificationsModule,
+    AuditLogModule,
+    SchoolSettingsModule,
   ],
   providers: [
     // Order matters: rate-limit first, then authenticate, then authorize.

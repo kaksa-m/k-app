@@ -454,8 +454,12 @@ async function main() {
         name: 'Term 1',
         startDate: new Date('2026-09-15'),
         endDate: new Date('2026-09-25'),
+        status: 'PUBLISHED',
+        publishedAt: new Date(),
       },
     }));
+
+  await prisma.exam.update({ where: { id: exam.id }, data: { status: 'PUBLISHED', publishedAt: exam.publishedAt ?? new Date() } });
 
   await prisma.examResult.upsert({
     where: {

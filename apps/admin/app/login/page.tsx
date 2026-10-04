@@ -1,6 +1,7 @@
 'use client';
 
 import { FormEvent, useState } from 'react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '../../lib/auth-context';
 import { ApiError } from '../../lib/api';
@@ -89,6 +90,8 @@ export default function LoginPage() {
           </div>
 
           {error && <p className="text-sm text-margin">{error}</p>}
+
+          <Link href="/forgot-password" className="block text-right text-xs text-ink-soft underline">Forgot password?</Link>
 
           <button
             type="submit"

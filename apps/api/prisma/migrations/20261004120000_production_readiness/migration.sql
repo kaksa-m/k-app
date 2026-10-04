@@ -1,0 +1,27 @@
+-- KAKSAM Phase 9 production readiness
+ALTER TABLE "schools" ADD COLUMN IF NOT EXISTS "address" TEXT;
+ALTER TABLE "schools" ADD COLUMN IF NOT EXISTS "phone" TEXT;
+ALTER TABLE "schools" ADD COLUMN IF NOT EXISTS "email" TEXT;
+ALTER TABLE "schools" ADD COLUMN IF NOT EXISTS "logoUrl" TEXT;
+ALTER TABLE "schools" ADD COLUMN IF NOT EXISTS "primaryColor" TEXT;
+ALTER TABLE "schools" ADD COLUMN IF NOT EXISTS "secondaryColor" TEXT;
+DO $$ BEGIN CREATE TYPE "ExamStatus" AS ENUM ('DRAFT','SCHEDULED','PUBLISHED','CLOSED'); EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+ALTER TABLE "exams" ADD COLUMN IF NOT EXISTS "status" "ExamStatus" NOT NULL DEFAULT 'DRAFT';
+ALTER TABLE "exams" ALTER COLUMN "status" TYPE "ExamStatus" USING "status"::"ExamStatus";
+ALTER TABLE "exams" ADD COLUMN IF NOT EXISTS "publishedAt" TIMESTAMP(3);
+CREATE TABLE IF NOT EXISTS "password_reset_tokens" ("id" TEXT NOT NULL, "userId" TEXT NOT NULL, "tokenHash" TEXT NOT NULL, "expiresAt" TIMESTAMP(3) NOT NULL, "usedAt" TIMESTAMP(3), "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP, CONSTRAINT "password_reset_tokens_pkey" PRIMARY KEY ("id"));
+CREATE UNIQUE INDEX IF NOT EXISTS "password_reset_tokens_tokenHash_key" ON "password_reset_tokens"("tokenHash");
+CREATE INDEX IF NOT EXISTS "password_reset_tokens_userId_expiresAt_idx" ON "password_reset_tokens"("userId","expiresAt");
+ALTER TABLE "password_reset_tokens" ADD CONSTRAINT "password_reset_tokens_userId_fkey" FOREIGN KEY ("userId") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN CREATE TYPE "NotificationType" AS ENUM ('ANNOUNCEMENT','SYSTEM','SECURITY','FINANCE','ACADEMIC'); EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+CREATE TABLE IF NOT EXISTS "notifications" ("id" TEXT NOT NULL, "schoolId" TEXT, "userId" TEXT NOT NULL, "type" "NotificationType" NOT NULL DEFAULT 'SYSTEM' , "title" TEXT NOT NULL, "body" TEXT NOT NULL, "readAt" TIMESTAMP(3), "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP, CONSTRAINT "notifications_pkey" PRIMARY KEY ("id"));
+CREATE INDEX IF NOT EXISTS "notifications_userId_readAt_createdAt_idx" ON "notifications"("userId","readAt","createdAt");
+CREATE INDEX IF NOT EXISTS "notifications_schoolId_createdAt_idx" ON "notifications"("schoolId","createdAt");
+ALTER TABLE "notifications" ADD CONSTRAINT "notifications_schoolId_fkey" FOREIGN KEY ("schoolId") REFERENCES "schools"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "notifications" ADD CONSTRAINT "notifications_userId_fkey" FOREIGN KEY ("userId") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+CREATE TABLE IF NOT EXISTS "audit_logs" ("id" TEXT NOT NULL, "schoolId" TEXT, "userId" TEXT, "action" TEXT NOT NULL, "entity" TEXT NOT NULL, "entityId" TEXT, "metadata" JSONB, "ipAddress" TEXT, "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP, CONSTRAINT "audit_logs_pkey" PRIMARY KEY ("id"));
+CREATE INDEX IF NOT EXISTS "audit_logs_schoolId_createdAt_idx" ON "audit_logs"("schoolId","createdAt");
+CREATE INDEX IF NOT EXISTS "audit_logs_userId_createdAt_idx" ON "audit_logs"("userId","createdAt");
+CREATE INDEX IF NOT EXISTS "audit_logs_entity_entityId_idx" ON "audit_logs"("entity","entityId");
+ALTER TABLE "audit_logs" ADD CONSTRAINT "audit_logs_schoolId_fkey" FOREIGN KEY ("schoolId") REFERENCES "schools"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "audit_logs" ADD CONSTRAINT "audit_logs_userId_fkey" FOREIGN KEY ("userId") REFERENCES "users"("id") ON DELETE SET NULL ON UPDATE CASCADE;

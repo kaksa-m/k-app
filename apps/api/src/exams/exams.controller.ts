@@ -1,9 +1,10 @@
-import { Body, Controller, Get, Post, Query } from '@nestjs/common';
+import { Body, Controller, Get, Post, Patch, Param, Query } from '@nestjs/common';
 import { Role } from '@prisma/client';
 import { CurrentUser, AuthenticatedUser } from '../common/decorators/current-user.decorator';
 import { Roles } from '../common/decorators/roles.decorator';
 import { CreateExamDto } from './dto/create-exam.dto';
 import { UpsertExamResultDto } from './dto/upsert-exam-result.dto';
+import { UpdateExamDto } from './dto/update-exam.dto';
 import { ExamsService } from './exams.service';
 
 @Controller('exams')
@@ -17,6 +18,10 @@ export class ExamsController {
   @Roles(Role.SCHOOL_ADMIN)
   @Post()
   create(@CurrentUser() user: AuthenticatedUser, @Body() dto: CreateExamDto) { return this.service.create(user.schoolId!, dto); }
+
+  @Roles(Role.SCHOOL_ADMIN)
+  @Patch(':id')
+  update(@CurrentUser() user: AuthenticatedUser, @Param('id') id: string, @Body() dto: UpdateExamDto) { return this.service.update(user.schoolId!, id, dto); }
 
   @Roles(Role.SCHOOL_ADMIN)
   @Post('results')

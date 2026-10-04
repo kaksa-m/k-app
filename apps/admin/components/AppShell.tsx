@@ -33,6 +33,7 @@ const SCHOOL_ADMIN_NAV: NavGroup[] = [
       { href: '/homework', label: 'Homework' },
       { href: '/announcements', label: 'Announcements' },
       { href: '/communication', label: 'Communication center' },
+      { href: '/audit-logs', label: 'Audit log' },
     ],
   },
   {
@@ -63,6 +64,15 @@ const PARENT_NAV: NavGroup[] = [
       { href: '/parent', label: 'Attendance & homework' },
     ],
   },
+];
+
+const ACCOUNTANT_NAV: NavGroup[] = [
+  { items: [{ href: '/payments', label: 'Finance overview' }] },
+  { heading: 'Finance', items: [
+    { href: '/fee-structures', label: 'Fee Structures' },
+    { href: '/invoices', label: 'Invoices' },
+    { href: '/payments', label: 'Payments' },
+  ] },
 ];
 
 const SUPER_ADMIN_NAV: NavGroup[] = [
@@ -113,11 +123,15 @@ export function AppShell({ children }: { children: ReactNode }) {
       pathname.startsWith('/fee-structures') ||
       pathname.startsWith('/invoices') ||
       pathname.startsWith('/payments') ||
-      pathname.startsWith('/exams');
+      pathname.startsWith('/exams') ||
+      pathname.startsWith('/settings') ||
+      pathname.startsWith('/audit-logs');
 
     const isTeacherRoute = pathname === '/teacher' || pathname.startsWith('/teacher/');
     const isParentRoute = pathname === '/parent' || pathname.startsWith('/parent/');
     const isAccountRoute = pathname === '/account' || pathname.startsWith('/account/');
+    const isNotificationRoute = pathname === '/notifications' || pathname.startsWith('/notifications/');
+    const isSettingsRoute = pathname === '/settings' || pathname.startsWith('/settings/');
     const isStudentRoute = pathname === '/student' || pathname.startsWith('/student/');
     const isExamRoute = pathname === '/exams' || pathname.startsWith('/exams/');
 
@@ -131,17 +145,21 @@ export function AppShell({ children }: { children: ReactNode }) {
       return;
     }
 
-    if (user.role === 'TEACHER' && (!isTeacherRoute && !isAccountRoute)) {
+    if ((isSettingsRoute || pathname.startsWith('/audit-logs')) && user.role !== 'SCHOOL_ADMIN') { router.replace('/account'); return; }
+
+    if (user.role === 'TEACHER' && (!isTeacherRoute && !isAccountRoute && !isNotificationRoute)) {
       router.replace('/teacher');
       return;
     }
 
-    if (user.role === 'PARENT' && !isParentRoute && !isAccountRoute) {
+    if (user.role === 'PARENT' && !isParentRoute && !isAccountRoute && !isNotificationRoute) {
       router.replace('/parent');
       return;
     }
 
-    if (user.role === 'STUDENT' && !isStudentRoute && !isAccountRoute) {
+    if (user.role === 'ACCOUNTANT' && !isAccountRoute && !isNotificationRoute && !(pathname.startsWith('/fee-structures') || pathname.startsWith('/invoices') || pathname.startsWith('/payments'))) { router.replace('/payments'); return; }
+
+    if (user.role === 'STUDENT' && !isStudentRoute && !isAccountRoute && !isNotificationRoute) {
       router.replace('/student');
       return;
     }
@@ -164,12 +182,15 @@ export function AppShell({ children }: { children: ReactNode }) {
           ? PARENT_NAV
           : user.role === 'STUDENT'
             ? STUDENT_NAV
-            : SCHOOL_ADMIN_NAV;
-  const navGroups: NavGroup[] = [...baseNavGroups, { items: [{ href: '/account', label: 'Account' }] }];
+            : user.role === 'ACCOUNTANT'
+              ? ACCOUNTANT_NAV
+              : SCHOOL_ADMIN_NAV;
+  const utilityItems = [{ href: '/notifications', label: 'Notifications' }, ...(user.role === 'SCHOOL_ADMIN' ? [{ href: '/settings', label: 'School settings' }] : []), { href: '/account', label: 'Account' }];
+  const navGroups: NavGroup[] = [...baseNavGroups, { items: utilityItems }];
 
   return (
     <div className="flex min-h-screen">
-      <aside className="w-60 shrink-0 bg-board text-chalk flex flex-col">
+      <aside className="w-60 shrink-0 bg-board text-chalk flex flex-col print:hidden">
         <div className="flex items-center gap-2 px-6 py-6">
           <LogoMark />
           <span className="font-display text-xl uppercase tracking-wide">Kaksam</span>
@@ -209,7 +230,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           </button>
         </div>
       </aside>
-      <main className="flex-1 bg-paper min-h-screen">
+      <main className="flex-1 bg-paper min-h-screen print:bg-white">
         <div className="max-w-6xl mx-auto px-8 py-10">{children}</div>
       </main>
     </div>

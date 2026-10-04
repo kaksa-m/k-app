@@ -1,0 +1,9 @@
+{
+  "name":"Kaksam School Management",
+  "short_name":"Kaksam",
+  "start_url":"/",
+  "display":"standalone",
+  "background_color":"#F5F1E4",
+  "theme_color":"#0F221D",
+  "description":"School management portal for Kaksam"
+}

@@ -7,6 +7,7 @@
     "dev:admin": "npm run dev --workspace=@kaksam/admin",
     "prisma:migrate": "npm run prisma:migrate --workspace=@kaksam/api",
     "prisma:seed": "npm run prisma:seed --workspace=@kaksam/api",
-    "prisma:studio": "npm run prisma:studio --workspace=@kaksam/api"
+    "prisma:studio": "npm run prisma:studio --workspace=@kaksam/api",
+    "smoke:api": "bash ./scripts/smoke-api.sh"
   }
 }

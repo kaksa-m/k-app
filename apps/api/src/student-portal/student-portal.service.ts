@@ -16,7 +16,7 @@ export class StudentPortalService {
       this.prisma.homework.findMany({ where: student.sectionId ? { classSession: { sectionId: student.sectionId } } : { id: '__none__' }, include: { classSession: { include: { subject: true } } }, orderBy: { dueDate: 'asc' }, take: 30 }),
       this.prisma.classwork.findMany({ where: student.sectionId ? { classSession: { sectionId: student.sectionId } } : { id: '__none__' }, include: { classSession: { include: { subject: true } } }, orderBy: { date: 'desc' }, take: 30 }),
       this.prisma.announcement.findMany({ where: { schoolId, OR: [{ audience: 'SCHOOL_WIDE' }, ...(student.sectionId ? [{ audience: 'SECTION' as const, sectionId: student.sectionId }] : [])] }, orderBy: { createdAt: 'desc' }, take: 30 }),
-      this.prisma.examResult.findMany({ where: { studentId: student.id, exam: { academicYear: { schoolId } } }, include: { exam: true, subject: true }, orderBy: [{ exam: { startDate: 'desc' } }, { subject: { name: 'asc' } }] }),
+      this.prisma.examResult.findMany({ where: { studentId: student.id, exam: { academicYear: { schoolId }, status: 'PUBLISHED' } }, include: { exam: true, subject: true }, orderBy: [{ exam: { startDate: 'desc' } }, { subject: { name: 'asc' } }] }),
     ]);
     return { student, attendance, homework, classwork, announcements, results };
   }

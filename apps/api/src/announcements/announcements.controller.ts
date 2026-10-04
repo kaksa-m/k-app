@@ -12,17 +12,17 @@ export class AnnouncementsController {
   @Roles(Role.SCHOOL_ADMIN, Role.TEACHER)
   @Post()
   create(@CurrentUser() user: AuthenticatedUser, @Body() dto: CreateAnnouncementDto) {
-    return this.service.create(user.schoolId!, dto);
+    return this.service.create(user.schoolId!, dto, user.userId);
   }
 
   @Get()
   findAll(@CurrentUser() user: AuthenticatedUser) {
-    return this.service.findAll(user.schoolId!);
+    return this.service.findAll(user.schoolId!, user.role, user.userId);
   }
 
   @Roles(Role.SCHOOL_ADMIN)
   @Delete(':id')
   remove(@CurrentUser() user: AuthenticatedUser, @Param('id') id: string) {
-    return this.service.remove(user.schoolId!, id);
+    return this.service.remove(user.schoolId!, id, user.userId);
   }
 }

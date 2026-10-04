@@ -3,6 +3,7 @@ import './globals.css';
 import { AuthProvider } from '../lib/auth-context';
 
 export const metadata: Metadata = {
+  manifest: '/manifest.webmanifest',
   title: 'KAKSAM Admin',
   description: 'School operations platform — admin console',
 };

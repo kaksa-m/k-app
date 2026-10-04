@@ -16,7 +16,8 @@ describe('AuthService.changePassword', () => {
     },
   } as any;
   const jwt = {} as any;
-  const service = new AuthService(prisma, jwt);
+  const audit = { record: jest.fn() } as any;
+  const service = new AuthService(prisma, jwt, audit);
 
   beforeEach(() => jest.clearAllMocks());
 
