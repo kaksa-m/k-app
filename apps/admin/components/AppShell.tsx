@@ -108,6 +108,7 @@ export function AppShell({ children }: { children: ReactNode }) {
 
     const isTeacherRoute = pathname === '/teacher' || pathname.startsWith('/teacher/');
     const isParentRoute = pathname === '/parent' || pathname.startsWith('/parent/');
+    const isAccountRoute = pathname === '/account' || pathname.startsWith('/account/');
 
     if (user.role === 'SUPER_ADMIN' && (isSchoolRoute || isTeacherRoute || isParentRoute)) {
       router.replace('/platform');
@@ -119,12 +120,12 @@ export function AppShell({ children }: { children: ReactNode }) {
       return;
     }
 
-    if (user.role === 'TEACHER' && (!isTeacherRoute)) {
+    if (user.role === 'TEACHER' && (!isTeacherRoute && !isAccountRoute)) {
       router.replace('/teacher');
       return;
     }
 
-    if (user.role === 'PARENT' && !isParentRoute) {
+    if (user.role === 'PARENT' && !isParentRoute && !isAccountRoute) {
       router.replace('/parent');
       return;
     }
@@ -138,7 +139,7 @@ export function AppShell({ children }: { children: ReactNode }) {
     );
   }
 
-  const navGroups =
+  const baseNavGroups =
     user.role === 'SUPER_ADMIN'
       ? SUPER_ADMIN_NAV
       : user.role === 'TEACHER'
@@ -146,6 +147,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         : user.role === 'PARENT'
           ? PARENT_NAV
           : SCHOOL_ADMIN_NAV;
+  const navGroups: NavGroup[] = [...baseNavGroups, { items: [{ href: '/account', label: 'Account' }] }];
 
   return (
     <div className="flex min-h-screen">

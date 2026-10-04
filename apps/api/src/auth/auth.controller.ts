@@ -3,6 +3,8 @@ import { AuthService } from './auth.service';
 import { LoginDto } from './dto/login.dto';
 import { RegisterSchoolDto } from './dto/register-school.dto';
 import { Public } from '../common/decorators/public.decorator';
+import { CurrentUser } from '../common/decorators/current-user.decorator';
+import { ChangePasswordDto } from './dto/change-password.dto';
 
 @Controller('auth')
 export class AuthController {
@@ -13,6 +15,11 @@ export class AuthController {
   @HttpCode(HttpStatus.OK)
   login(@Body() dto: LoginDto) {
     return this.authService.login(dto);
+  }
+
+  @Post('change-password')
+  changePassword(@CurrentUser() user: { userId: string }, @Body() dto: ChangePasswordDto) {
+    return this.authService.changePassword(user.userId, dto);
   }
 
   // Self-serve school onboarding. In production you'll likely gate this

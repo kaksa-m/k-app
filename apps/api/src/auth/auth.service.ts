@@ -5,6 +5,7 @@ import { Role } from '@prisma/client';
 import { PrismaService } from '../common/prisma/prisma.service';
 import { LoginDto } from './dto/login.dto';
 import { RegisterSchoolDto } from './dto/register-school.dto';
+import { ChangePasswordDto } from './dto/change-password.dto';
 
 const SALT_ROUNDS = 12;
 
@@ -27,6 +28,30 @@ export class AuthService {
     }
 
     return this.buildAuthResponse(user.id, user.email, user.role, user.schoolId, user.name);
+  }
+
+  async changePassword(userId: string, dto: ChangePasswordDto) {
+    if (dto.currentPassword === dto.newPassword) {
+      throw new UnauthorizedException('New password must be different from the current password.');
+    }
+
+    const user = await this.prisma.user.findUnique({ where: { id: userId } });
+    if (!user || !user.isActive) {
+      throw new UnauthorizedException('User account is not active.');
+    }
+
+    const matches = await bcrypt.compare(dto.currentPassword, user.passwordHash);
+    if (!matches) {
+      throw new UnauthorizedException('Current password is incorrect.');
+    }
+
+    const passwordHash = await bcrypt.hash(dto.newPassword, SALT_ROUNDS);
+    await this.prisma.user.update({
+      where: { id: userId },
+      data: { passwordHash },
+    });
+
+    return { message: 'Password changed successfully.' };
   }
 
   // Creates a new School plus its first SCHOOL_ADMIN user in one transaction,
