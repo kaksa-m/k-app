@@ -21,7 +21,7 @@ const USER_KEY = 'kaksam_user';
 // "Forbidden resource" errors on every API call, reject it up front.
 // Exported so AppShell can apply the same check to any already-cached
 // session from before this restriction existed.
-export const ALLOWED_ROLES = ['SCHOOL_ADMIN', 'SUPER_ADMIN', 'TEACHER'];
+export const ALLOWED_ROLES = ['SCHOOL_ADMIN', 'SUPER_ADMIN', 'TEACHER', 'PARENT'];
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null);

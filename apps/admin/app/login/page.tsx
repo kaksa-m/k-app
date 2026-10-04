@@ -24,7 +24,15 @@ export default function LoginPage() {
       // school-admin dashboard.
       const storedUser = window.localStorage.getItem('kaksam_user');
       const loggedInUser = storedUser ? JSON.parse(storedUser) : null;
-      router.push(loggedInUser?.role === 'SUPER_ADMIN' ? '/platform' : '/dashboard');
+      router.push(
+        loggedInUser?.role === 'SUPER_ADMIN'
+          ? '/platform'
+          : loggedInUser?.role === 'TEACHER'
+            ? '/teacher'
+            : loggedInUser?.role === 'PARENT'
+              ? '/parent'
+              : '/dashboard',
+      );
     } catch (err) {
       setError(err instanceof ApiError ? err.message : 'Something went wrong. Please try again.');
     } finally {
@@ -90,9 +98,7 @@ export default function LoginPage() {
             {submitting ? 'Logging in…' : 'Log in'}
           </button>
 
-          <p className="text-xs text-ink-soft font-mono pt-2 border-t border-paper-line">
-            Demo admin: admin@greenvalley.test / password123 · Platform: superadmin@kaksam.test / password123
-          </p>
+
         </form>
       </div>
     </div>

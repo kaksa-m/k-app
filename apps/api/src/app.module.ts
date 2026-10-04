@@ -24,6 +24,7 @@ import { AnnouncementsModule } from './announcements/announcements.module';
 import { FeesModule } from './fees/fees.module';
 import { DashboardModule } from './dashboard/dashboard.module';
 import { PlatformModule } from './platform/platform.module';
+import { ParentPortalModule } from './parent-portal/parent-portal.module';
 
 @Module({
   imports: [
@@ -48,6 +49,7 @@ import { PlatformModule } from './platform/platform.module';
     FeesModule,
     DashboardModule,
     PlatformModule,
+    ParentPortalModule,
   ],
   providers: [
     // Order matters: rate-limit first, then authenticate, then authorize.
