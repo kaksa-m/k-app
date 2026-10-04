@@ -22,6 +22,7 @@ import { HomeworkModule } from './homework/homework.module';
 import { AnnouncementsModule } from './announcements/announcements.module';
 import { FeesModule } from './fees/fees.module';
 import { DashboardModule } from './dashboard/dashboard.module';
+import { PlatformModule } from './platform/platform.module';
 
 @Module({
   imports: [
@@ -44,6 +45,7 @@ import { DashboardModule } from './dashboard/dashboard.module';
     AnnouncementsModule,
     FeesModule,
     DashboardModule,
+    PlatformModule,
   ],
   providers: [
     // Order matters: rate-limit first, then authenticate, then authorize.
