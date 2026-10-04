@@ -10,7 +10,13 @@ export default function HomePage() {
 
   useEffect(() => {
     if (loading) return;
-    router.replace(user ? '/dashboard' : '/login');
+
+    if (!user) {
+      router.replace('/login');
+      return;
+    }
+
+    router.replace(user.role === 'SUPER_ADMIN' ? '/platform' : '/dashboard');
   }, [user, loading, router]);
 
   return null;
