@@ -21,7 +21,7 @@ const USER_KEY = 'kaksam_user';
 // "Forbidden resource" errors on every API call, reject it up front.
 // Exported so AppShell can apply the same check to any already-cached
 // session from before this restriction existed.
-export const ALLOWED_ROLES = ['SCHOOL_ADMIN', 'SUPER_ADMIN'];
+export const ALLOWED_ROLES = ['SCHOOL_ADMIN', 'SUPER_ADMIN', 'TEACHER'];
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null);
@@ -45,7 +45,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (!ALLOWED_ROLES.includes(res.user.role)) {
       throw new ApiError(
         'This is the school admin console — it\u2019s only for Admin accounts right now. ' +
-          'Teacher and parent access is coming to a separate app.',
+          'Teacher workspace access is available for teacher accounts; parent access will use a separate app.',
         403,
       );
     }

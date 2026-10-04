@@ -16,12 +16,19 @@ export class TeachersController {
     return this.service.create(user.schoolId!, dto);
   }
 
-  @Roles(Role.SCHOOL_ADMIN, Role.TEACHER)
+  @Roles(Role.SCHOOL_ADMIN)
   @Get()
   findAll(@CurrentUser() user: AuthenticatedUser) {
     return this.service.findAll(user.schoolId!);
   }
 
+  @Roles(Role.TEACHER)
+  @Get('me')
+  me(@CurrentUser() user: AuthenticatedUser) {
+    return this.service.me(user.schoolId!, user.userId);
+  }
+
+  @Roles(Role.SCHOOL_ADMIN)
   @Get(':id')
   findOne(@CurrentUser() user: AuthenticatedUser, @Param('id') id: string) {
     return this.service.findOne(user.schoolId!, id);

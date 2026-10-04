@@ -16,7 +16,7 @@ export default function HomePage() {
       return;
     }
 
-    router.replace(user.role === 'SUPER_ADMIN' ? '/platform' : '/dashboard');
+    router.replace(user.role === 'SUPER_ADMIN' ? '/platform' : user.role === 'TEACHER' ? '/teacher' : '/dashboard');
   }, [user, loading, router]);
 
   return null;

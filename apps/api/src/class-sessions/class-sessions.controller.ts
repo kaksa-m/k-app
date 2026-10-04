@@ -25,6 +25,17 @@ export class ClassSessionsController {
   // doesn't reliably skip the case where the param is simply absent from
   // the URL, which threw "Validation failed (numeric string is expected)"
   // on every plain ?sectionId=... request.
+  @Roles(Role.TEACHER, Role.SCHOOL_ADMIN)
+  @Get('mine')
+  findMine(
+    @CurrentUser() user: AuthenticatedUser,
+    @Query('dayOfWeek') dayOfWeekRaw?: string,
+  ) {
+    const dayOfWeek = dayOfWeekRaw !== undefined && dayOfWeekRaw !== '' ? Number(dayOfWeekRaw) : undefined;
+    return this.service.findForCurrentTeacher(user.schoolId!, user.userId, dayOfWeek);
+  }
+
+  @Roles(Role.SCHOOL_ADMIN)
   @Get()
   findAll(
     @CurrentUser() user: AuthenticatedUser,

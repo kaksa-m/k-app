@@ -35,6 +35,25 @@ export class TeachersService {
     });
   }
 
+
+  async me(schoolId: string, userId: string) {
+    const teacher = await this.prisma.teacher.findFirst({
+      where: { schoolId, userId },
+      include: {
+        user: { select: { id: true, email: true, isActive: true, name: true } },
+        classSessions: {
+          include: {
+            subject: true,
+            section: { include: { class: true, academicYear: true } },
+          },
+          orderBy: [{ dayOfWeek: 'asc' }, { startTime: 'asc' }],
+        },
+      },
+    });
+    if (!teacher) throw new NotFoundException('Teacher profile not found.');
+    return teacher;
+  }
+
   findAll(schoolId: string) {
     return this.prisma.teacher.findMany({
       where: { schoolId },

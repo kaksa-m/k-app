@@ -95,6 +95,15 @@ export class ClassSessionsService {
     });
   }
 
+  async findForCurrentTeacher(schoolId: string, userId: string, dayOfWeek?: number) {
+    const teacher = await this.prisma.teacher.findFirst({
+      where: { userId, schoolId },
+      select: { id: true },
+    });
+    if (!teacher) throw new NotFoundException('Teacher profile not found.');
+    return this.findForTeacher(schoolId, teacher.id, dayOfWeek);
+  }
+
   findForTeacher(schoolId: string, teacherId: string, dayOfWeek?: number) {
     return this.prisma.classSession.findMany({
       where: { teacherId, teacher: { schoolId }, ...(dayOfWeek !== undefined ? { dayOfWeek } : {}) },

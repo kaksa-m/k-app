@@ -170,3 +170,7 @@ depth without changing the application code.
 ## Phase 1B — Student Management
 
 The School Admin student register now supports server-side search by name/roll number, active/inactive visibility, editing, section assignment, date of birth, and safe deactivation. Student queries remain tenant-scoped by `schoolId`; teachers cannot request inactive records. API tests cover cross-tenant section validation, tenant-scoped search, and soft deactivation.
+
+## Phase 4 — Teacher Operations
+
+See `PHASE-4-TEACHER-OPERATIONS.md` for the teacher workspace, authorization boundaries, and verification steps.

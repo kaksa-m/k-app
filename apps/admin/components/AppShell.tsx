@@ -43,6 +43,11 @@ const SCHOOL_ADMIN_NAV: NavGroup[] = [
   },
 ];
 
+
+const TEACHER_NAV: NavGroup[] = [
+  { items: [{ href: '/teacher', label: 'Today' }] },
+];
+
 const SUPER_ADMIN_NAV: NavGroup[] = [
   {
     heading: 'Platform',
@@ -91,13 +96,21 @@ export function AppShell({ children }: { children: ReactNode }) {
       pathname.startsWith('/invoices') ||
       pathname.startsWith('/payments');
 
+    const isTeacherRoute = pathname === '/teacher' || pathname.startsWith('/teacher/');
+
     if (user.role === 'SUPER_ADMIN' && isSchoolRoute) {
       router.replace('/platform');
       return;
     }
 
-    if (user.role === 'SCHOOL_ADMIN' && isPlatformRoute) {
+    if (user.role === 'SCHOOL_ADMIN' && (isPlatformRoute || isTeacherRoute)) {
       router.replace('/dashboard');
+      return;
+    }
+
+    if (user.role === 'TEACHER' && !isTeacherRoute) {
+      router.replace('/teacher');
+      return;
     }
   }, [loading, user, pathname, router, logout]);
 
@@ -109,7 +122,7 @@ export function AppShell({ children }: { children: ReactNode }) {
     );
   }
 
-  const navGroups = user.role === 'SUPER_ADMIN' ? SUPER_ADMIN_NAV : SCHOOL_ADMIN_NAV;
+  const navGroups = user.role === 'SUPER_ADMIN' ? SUPER_ADMIN_NAV : user.role === 'TEACHER' ? TEACHER_NAV : SCHOOL_ADMIN_NAV;
 
   return (
     <div className="flex min-h-screen">
