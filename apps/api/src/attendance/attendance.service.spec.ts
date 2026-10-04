@@ -6,7 +6,8 @@ describe('AttendanceService', () => {
   const prisma = {
     classSession: { findFirst: jest.fn(), findUniqueOrThrow: jest.fn() },
     teacher: { findFirst: jest.fn() },
-    student: { findMany: jest.fn() },
+    parent: { findFirst: jest.fn() },
+    student: { findMany: jest.fn(), findFirst: jest.fn() },
     attendance: { upsert: jest.fn(), findMany: jest.fn() },
     $transaction: jest.fn(),
   } as any;
@@ -73,4 +74,38 @@ describe('AttendanceService', () => {
 
     expect(prisma.student.findMany).not.toHaveBeenCalled();
   });
+  it('allows a student to view only their own attendance', async () => {
+    prisma.student.findFirst.mockResolvedValue({ id: 'student-1', userId: 'user-student', parentId: null });
+    prisma.attendance.findMany.mockResolvedValue([]);
+
+    await expect(service.forStudent('school-a', 'student-1', Role.STUDENT, 'user-student'))
+      .resolves.toEqual([]);
+  });
+
+  it('rejects a student viewing another student attendance', async () => {
+    prisma.student.findFirst.mockResolvedValue({ id: 'student-2', userId: 'user-other', parentId: null });
+
+    await expect(service.forStudent('school-a', 'student-2', Role.STUDENT, 'user-student'))
+      .rejects.toBeInstanceOf(ForbiddenException);
+    expect(prisma.attendance.findMany).not.toHaveBeenCalled();
+  });
+
+  it('allows a parent to view attendance for their own child', async () => {
+    prisma.student.findFirst.mockResolvedValue({ id: 'student-1', userId: null, parentId: 'parent-1' });
+    prisma.parent.findFirst.mockResolvedValue({ id: 'parent-1' });
+    prisma.attendance.findMany.mockResolvedValue([]);
+
+    await expect(service.forStudent('school-a', 'student-1', Role.PARENT, 'parent-user'))
+      .resolves.toEqual([]);
+  });
+
+  it('rejects a parent viewing another family student attendance', async () => {
+    prisma.student.findFirst.mockResolvedValue({ id: 'student-2', userId: null, parentId: 'parent-2' });
+    prisma.parent.findFirst.mockResolvedValue(null);
+
+    await expect(service.forStudent('school-a', 'student-2', Role.PARENT, 'parent-user'))
+      .rejects.toBeInstanceOf(ForbiddenException);
+    expect(prisma.attendance.findMany).not.toHaveBeenCalled();
+  });
+
 });

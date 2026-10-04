@@ -1,4 +1,4 @@
-import { BadRequestException, ForbiddenException, Injectable } from '@nestjs/common';
+import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { Role } from '@prisma/client';
 import { PrismaService } from '../common/prisma/prisma.service';
 import { MarkAttendanceDto } from './dto/mark-attendance.dto';
@@ -87,7 +87,25 @@ export class AttendanceService {
     }));
   }
 
-  async forStudent(schoolId: string, studentId: string, from?: string, to?: string) {
+  async forStudent(schoolId: string, studentId: string, role: Role, userId: string, from?: string, to?: string) {
+    const student = await this.prisma.student.findFirst({
+      where: { id: studentId, schoolId },
+      select: { id: true, userId: true, parentId: true },
+    });
+    if (!student) throw new NotFoundException('Student not found.');
+
+    if (role === Role.STUDENT && student.userId !== userId) {
+      throw new ForbiddenException('Students can only view their own attendance.');
+    }
+
+    if (role === Role.PARENT) {
+      const parent = await this.prisma.parent.findFirst({
+        where: { userId, schoolId, students: { some: { id: studentId } } },
+        select: { id: true },
+      });
+      if (!parent) throw new ForbiddenException('Parents can only view attendance for their own children.');
+    }
+
     return this.prisma.attendance.findMany({
       where: {
         studentId,

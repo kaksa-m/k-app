@@ -32,6 +32,6 @@ export class AttendanceController {
     @Query('from') from?: string,
     @Query('to') to?: string,
   ) {
-    return this.service.forStudent(user.schoolId!, studentId, from, to);
+    return this.service.forStudent(user.schoolId!, studentId, user.role, user.userId, from, to);
   }
 }
