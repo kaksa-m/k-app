@@ -15,7 +15,8 @@
     "test": "jest --config ./jest.config.js",
     "prisma:migrate:dev": "prisma migrate dev",
     "prisma:migrate:deploy": "prisma migrate deploy",
-    "prisma:status": "prisma migrate status"
+    "prisma:status": "prisma migrate status",
+    "prisma:migrate:status": "prisma migrate status"
   },
   "dependencies": {
     "@nestjs/common": "^10.4.0",

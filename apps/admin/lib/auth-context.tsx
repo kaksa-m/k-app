@@ -15,10 +15,10 @@ interface AuthContextValue {
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 const USER_KEY = 'kaksam_user';
 
-// This app is the School Admin console specifically — teachers and
-// parents will get their own surfaces later (see README §5). Rather than
-// let a non-admin log in and hit a wall of "Forbidden resource" errors
-// on every API call, we reject the login up front with a clear message.
+// This web app currently serves the platform and school-admin consoles.
+// Teachers, parents, students and accountants will get their own surfaces
+// later. Rather than let an unsupported role log in and hit a wall of
+// "Forbidden resource" errors on every API call, reject it up front.
 // Exported so AppShell can apply the same check to any already-cached
 // session from before this restriction existed.
 export const ALLOWED_ROLES = ['SCHOOL_ADMIN', 'SUPER_ADMIN'];

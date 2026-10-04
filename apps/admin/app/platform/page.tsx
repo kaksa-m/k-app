@@ -2,14 +2,33 @@
 
 import { useEffect, useState } from 'react';
 import { AppShell } from '../../components/AppShell';
+import { useAuth } from '../../lib/auth-context';
+import { useRouter } from 'next/navigation';
 import { Card, ErrorText } from '../../components/ui';
 import { api, ApiError } from '../../lib/api';
 import type { PlatformOverview } from '../../lib/types';
 
 export default function PlatformPage() {
+  const { user, loading } = useAuth();
+  const router = useRouter();
   const [data, setData] = useState<PlatformOverview | null>(null);
   const [error, setError] = useState<string | null>(null);
-  useEffect(() => { api.get<PlatformOverview>('/platform/overview').then(setData).catch((e) => setError(e instanceof ApiError ? e.message : 'Failed to load platform overview.')); }, []);
+
+  useEffect(() => {
+    if (loading) return;
+    if (!user) {
+      router.replace('/login');
+      return;
+    }
+    if (user.role !== 'SUPER_ADMIN') {
+      router.replace('/dashboard');
+      return;
+    }
+    api
+      .get<PlatformOverview>('/platform/overview')
+      .then(setData)
+      .catch((e) => setError(e instanceof ApiError ? e.message : 'Failed to load platform overview.'));
+  }, [user, loading, router]);
   return <AppShell>
     <div className="mb-8"><div className="font-mono text-xs uppercase tracking-widest text-margin mb-2">Platform</div><h1 className="font-display text-4xl uppercase text-ink">KAKSAM overview</h1><p className="mt-2 text-sm text-ink-soft">Manage schools and monitor the multi-tenant platform.</p></div>
     <ErrorText>{error}</ErrorText>

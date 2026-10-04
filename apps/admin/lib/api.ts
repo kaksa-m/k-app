@@ -2,7 +2,13 @@
 // and error-handling logic in one place instead of repeating it on
 // every page.
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000/api';
+// In production, Vercel should provide NEXT_PUBLIC_API_URL. The Render
+// blueprint names the API service `kaksam-api`, so this fallback also lets
+// the deployed admin console work if the Vercel variable was omitted.
+const API_URL = (
+  process.env.NEXT_PUBLIC_API_URL ?? 'https://kaksam-api.onrender.com/api'
+).replace(/\/$/, '');
+
 const TOKEN_KEY = 'kaksam_token';
 
 export function getToken(): string | null {
@@ -28,7 +34,8 @@ export class ApiError extends Error {
 
 export async function apiFetch<T>(path: string, options: RequestInit = {}): Promise<T> {
   const token = getToken();
-  const res = await fetch(`${API_URL}${path}`, {
+  const normalizedPath = path.startsWith('/') ? path : `/${path}`;
+  const res = await fetch(`${API_URL}${normalizedPath}`, {
     ...options,
     headers: {
       'Content-Type': 'application/json',

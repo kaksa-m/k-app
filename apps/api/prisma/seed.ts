@@ -17,7 +17,6 @@ const SALT_ROUNDS = 12;
 // - Academic year/class/section/subject/session use find-or-create patterns.
 // - Student demo records are identified by school + roll number.
 // - Content records use stable identifying fields where appropriate.
-
 async function main() {
   const passwordHash = await bcrypt.hash('password123', SALT_ROUNDS);
 
@@ -129,10 +128,7 @@ async function main() {
 
   const academicYear =
     (await prisma.academicYear.findFirst({
-      where: {
-        schoolId: school.id,
-        name: '2026-27',
-      },
+      where: { schoolId: school.id, name: '2026-27' },
     })) ??
     (await prisma.academicYear.create({
       data: {
@@ -144,17 +140,10 @@ async function main() {
       },
     }));
 
-  // Ensure only this academic year is current for the school.
   await prisma.academicYear.updateMany({
-    where: {
-      schoolId: school.id,
-      id: { not: academicYear.id },
-    },
-    data: {
-      isCurrent: false,
-    },
+    where: { schoolId: school.id, id: { not: academicYear.id } },
+    data: { isCurrent: false },
   });
-
   await prisma.academicYear.update({
     where: { id: academicYear.id },
     data: { isCurrent: true },
@@ -166,17 +155,10 @@ async function main() {
 
   const class8 =
     (await prisma.class.findFirst({
-      where: {
-        schoolId: school.id,
-        name: 'Class 8',
-      },
+      where: { schoolId: school.id, name: 'Class 8' },
     })) ??
     (await prisma.class.create({
-      data: {
-        schoolId: school.id,
-        name: 'Class 8',
-        order: 8,
-      },
+      data: { schoolId: school.id, name: 'Class 8', order: 8 },
     }));
 
   // ---------------------------------------------------------------------------
@@ -204,9 +186,7 @@ async function main() {
 
   await prisma.section.update({
     where: { id: section8A.id },
-    data: {
-      classTeacherId: teacher.id,
-    },
+    data: { classTeacherId: teacher.id },
   });
 
   // ---------------------------------------------------------------------------
@@ -215,35 +195,22 @@ async function main() {
 
   const mathsSubject =
     (await prisma.subject.findFirst({
-      where: {
-        schoolId: school.id,
-        name: 'Mathematics',
-      },
+      where: { schoolId: school.id, name: 'Mathematics' },
     })) ??
     (await prisma.subject.create({
-      data: {
-        schoolId: school.id,
-        name: 'Mathematics',
-        code: 'MATH',
-      },
+      data: { schoolId: school.id, name: 'Mathematics', code: 'MATH' },
     }));
 
-  // Connect Mathematics to Class 8.
   await prisma.class.update({
     where: { id: class8.id },
-    data: {
-      subjects: {
-        connect: { id: mathsSubject.id },
-      },
-    },
+    data: { subjects: { connect: { id: mathsSubject.id } } },
   });
 
   // ---------------------------------------------------------------------------
   // TODAY'S CLASS SESSION
   // ---------------------------------------------------------------------------
 
-  // Schema day-of-week:
-  // 0 = Monday ... 6 = Sunday
+  // Schema day-of-week: 0 = Monday ... 6 = Sunday.
   const jsDay = new Date().getDay();
   const todaySchemaDay = jsDay === 0 ? 6 : jsDay - 1;
 
@@ -313,33 +280,15 @@ async function main() {
   // ---------------------------------------------------------------------------
 
   const studentSeeds = [
-    {
-      firstName: 'Aarav',
-      lastName: 'Kumar',
-      rollNumber: '01',
-      parentId: parent.id,
-    },
-    {
-      firstName: 'Diya',
-      lastName: 'Patel',
-      rollNumber: '02',
-      parentId: undefined,
-    },
-    {
-      firstName: 'Kabir',
-      lastName: 'Singh',
-      rollNumber: '03',
-      parentId: undefined,
-    },
+    { firstName: 'Aarav', lastName: 'Kumar', rollNumber: '01', parentId: parent.id },
+    { firstName: 'Diya', lastName: 'Patel', rollNumber: '02', parentId: undefined },
+    { firstName: 'Kabir', lastName: 'Singh', rollNumber: '03', parentId: undefined },
   ];
 
   const students = await Promise.all(
     studentSeeds.map(async (studentSeed) => {
       const existing = await prisma.student.findFirst({
-        where: {
-          schoolId: school.id,
-          rollNumber: studentSeed.rollNumber,
-        },
+        where: { schoolId: school.id, rollNumber: studentSeed.rollNumber },
       });
 
       if (existing) {
@@ -423,9 +372,7 @@ async function main() {
   // HOMEWORK
   // ---------------------------------------------------------------------------
 
-  const dueDate = new Date(
-    Date.now() + 2 * 24 * 60 * 60 * 1000,
-  );
+  const dueDate = new Date(Date.now() + 2 * 24 * 60 * 60 * 1000);
 
   const homework = await prisma.homework.findFirst({
     where: {
@@ -452,10 +399,7 @@ async function main() {
   // ---------------------------------------------------------------------------
 
   const announcement = await prisma.announcement.findFirst({
-    where: {
-      schoolId: school.id,
-      title: 'Independence Day event',
-    },
+    where: { schoolId: school.id, title: 'Independence Day event' },
   });
 
   if (!announcement) {
@@ -474,10 +418,7 @@ async function main() {
 
   const feeStructure =
     (await prisma.feeStructure.findFirst({
-      where: {
-        schoolId: school.id,
-        name: 'Tuition — Class 8',
-      },
+      where: { schoolId: school.id, name: 'Tuition — Class 8' },
     })) ??
     (await prisma.feeStructure.create({
       data: {
@@ -507,9 +448,7 @@ async function main() {
         studentId: students[0].id,
         feeStructureId: feeStructure.id,
         amountDue: 4500,
-        dueDate: new Date(
-          Date.now() + 5 * 24 * 60 * 60 * 1000,
-        ),
+        dueDate: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000),
       },
     });
   }

@@ -19,7 +19,12 @@ export default function LoginPage() {
     setSubmitting(true);
     try {
       await login(email, password);
-      router.push('/dashboard');
+      // AuthProvider has already stored the user; route each role to its
+      // correct surface rather than always sending platform admins to the
+      // school-admin dashboard.
+      const storedUser = window.localStorage.getItem('kaksam_user');
+      const loggedInUser = storedUser ? JSON.parse(storedUser) : null;
+      router.push(loggedInUser?.role === 'SUPER_ADMIN' ? '/platform' : '/dashboard');
     } catch (err) {
       setError(err instanceof ApiError ? err.message : 'Something went wrong. Please try again.');
     } finally {
@@ -86,7 +91,7 @@ export default function LoginPage() {
           </button>
 
           <p className="text-xs text-ink-soft font-mono pt-2 border-t border-paper-line">
-            Demo: admin@greenvalley.test / password123 (after running the seed script)
+            Demo admin: admin@greenvalley.test / password123 · Platform: superadmin@kaksam.test / password123
           </p>
         </form>
       </div>

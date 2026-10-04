@@ -10,7 +10,7 @@ interface NavGroup {
   items: { href: string; label: string }[];
 }
 
-const NAV_GROUPS: NavGroup[] = [
+const SCHOOL_ADMIN_NAV: NavGroup[] = [
   { items: [{ href: '/dashboard', label: 'Today' }] },
   {
     heading: 'People & academics',
@@ -31,10 +31,28 @@ const NAV_GROUPS: NavGroup[] = [
       { href: '/announcements', label: 'Announcements' },
     ],
   },
+  {
+    heading: 'Finance',
+    items: [
+      { href: '/fee-structures', label: 'Fee Structures' },
+      { href: '/invoices', label: 'Invoices' },
+      { href: '/payments', label: 'Payments' },
+    ],
+  },
+];
+
+const SUPER_ADMIN_NAV: NavGroup[] = [
+  {
+    heading: 'Platform',
+    items: [
+      { href: '/platform', label: 'Overview' },
+      { href: '/schools', label: 'Schools' },
+    ],
+  },
 ];
 
 // Wraps every authenticated page: redirects to /login if there's no
-// session, then renders the sidebar + topbar chrome around the page content.
+// session, enforces role-specific surfaces, then renders the sidebar.
 export function AppShell({ children }: { children: ReactNode }) {
   const { user, loading, logout } = useAuth();
   const pathname = usePathname();
@@ -42,16 +60,42 @@ export function AppShell({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     if (loading) return;
+
     if (!user) {
       router.replace('/login');
       return;
     }
+
     if (!ALLOWED_ROLES.includes(user.role)) {
-      // Stale session from before this app was restricted to admins —
-      // log out cleanly rather than letting every API call 403.
       logout();
+      return;
     }
-  }, [loading, user, router, logout]);
+
+    const isPlatformRoute = pathname === '/platform' || pathname.startsWith('/schools');
+    const isSchoolRoute =
+      pathname === '/dashboard' ||
+      pathname.startsWith('/students') ||
+      pathname.startsWith('/teachers') ||
+      pathname.startsWith('/classes') ||
+      pathname.startsWith('/subjects') ||
+      pathname.startsWith('/timetable') ||
+      pathname.startsWith('/attendance') ||
+      pathname.startsWith('/classwork') ||
+      pathname.startsWith('/homework') ||
+      pathname.startsWith('/announcements') ||
+      pathname.startsWith('/fee-structures') ||
+      pathname.startsWith('/invoices') ||
+      pathname.startsWith('/payments');
+
+    if (user.role === 'SUPER_ADMIN' && isSchoolRoute) {
+      router.replace('/platform');
+      return;
+    }
+
+    if (user.role === 'SCHOOL_ADMIN' && isPlatformRoute) {
+      router.replace('/dashboard');
+    }
+  }, [loading, user, pathname, router, logout]);
 
   if (loading || !user || !ALLOWED_ROLES.includes(user.role)) {
     return (
@@ -61,6 +105,8 @@ export function AppShell({ children }: { children: ReactNode }) {
     );
   }
 
+  const navGroups = user.role === 'SUPER_ADMIN' ? SUPER_ADMIN_NAV : SCHOOL_ADMIN_NAV;
+
   return (
     <div className="flex min-h-screen">
       <aside className="w-60 shrink-0 bg-board text-chalk flex flex-col">
@@ -69,7 +115,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           <span className="font-display text-xl uppercase tracking-wide">Kaksam</span>
         </div>
         <nav className="flex-1 px-3 space-y-4 overflow-y-auto">
-          {NAV_GROUPS.map((group, gi) => (
+          {navGroups.map((group, gi) => (
             <div key={gi} className="space-y-1">
               {group.heading && (
                 <div className="px-3 pt-2 pb-1 font-mono text-[10px] uppercase tracking-widest text-chalk/40">
@@ -77,13 +123,15 @@ export function AppShell({ children }: { children: ReactNode }) {
                 </div>
               )}
               {group.items.map((item) => {
-                const active = pathname?.startsWith(item.href);
+                const active = pathname === item.href || pathname?.startsWith(`${item.href}/`);
                 return (
                   <Link
                     key={item.href}
                     href={item.href}
                     className={`block rounded px-3 py-2 text-sm font-medium transition-colors ${
-                      active ? 'bg-board-deep text-marigold' : 'text-chalk/80 hover:bg-board-deep hover:text-chalk'
+                      active
+                        ? 'bg-board-deep text-marigold'
+                        : 'text-chalk/80 hover:bg-board-deep hover:text-chalk'
                     }`}
                   >
                     {item.label}
