@@ -3,6 +3,8 @@ import { AuthService } from './auth.service';
 import { LoginDto } from './dto/login.dto';
 import { RegisterSchoolDto } from './dto/register-school.dto';
 import { Public } from '../common/decorators/public.decorator';
+import { Roles } from '../common/decorators/roles.decorator';
+import { Role } from '@prisma/client';
 
 @Controller('auth')
 export class AuthController {
@@ -15,10 +17,8 @@ export class AuthController {
     return this.authService.login(dto);
   }
 
-  // Self-serve school onboarding. In production you'll likely gate this
-  // behind an invite code or a Kaksam-staff-only flow — left open here
-  // so the MVP loop (School Setup → ...) is testable end to end.
-  @Public()
+  // Platform onboarding is intentionally restricted to KAKSAM SUPER_ADMIN.
+  @Roles(Role.SUPER_ADMIN)
   @Post('register-school')
   registerSchool(@Body() dto: RegisterSchoolDto) {
     return this.authService.registerSchool(dto);

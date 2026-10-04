@@ -166,3 +166,17 @@ depth without changing the application code.
 - Add the overdue-invoice scheduled job mentioned above.
 - Add integration tests for the tenant-isolation logic specifically —
   that's the one category of bug that's expensive to find late.
+
+## Platform admin
+
+The admin app now has a dedicated SUPER_ADMIN surface for tenant administration:
+- `/platform` — platform overview
+- `/schools` — list and create schools, including the first School Admin
+- `/schools/:id` — school tenant summary
+
+Seed credentials:
+- SUPER_ADMIN: `superadmin@kaksam.test` / `password123`
+- SCHOOL_ADMIN: `admin@greenvalley.test` / `password123`
+
+School admins also have Finance navigation for fee structures, invoices, and payments.
+`POST /auth/register-school` is restricted to SUPER_ADMIN; the UI onboarding path is `/schools`.

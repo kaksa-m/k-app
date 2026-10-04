@@ -17,7 +17,9 @@
     "strictBindCallApply": false,
     "forceConsistentCasingInFileNames": true,
     "noFallthroughCasesInSwitch": false,
-    "esModuleInterop": true
+    "esModuleInterop": true,
+    "strict": true,
+    "types": ["node", "jest"]
   },
   // Scoped to src/ only so prisma/seed.ts (compiled separately via
   // ts-node, see package.json's prisma.seed) doesn't get pulled into

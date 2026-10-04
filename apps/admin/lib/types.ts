@@ -133,3 +133,41 @@ export interface Announcement {
 // Days of the week in schema order (0=Monday..6=Sunday) — used to render
 // the dayOfWeek picker consistently across Attendance/Classwork/Homework forms.
 export const DAY_LABELS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+
+export interface PlatformOverview {
+  schools: number;
+  users: number;
+  students: number;
+  outstandingFees: number;
+}
+
+export interface SchoolSummary {
+  id: string;
+  name: string;
+  slug: string;
+  city: string | null;
+  timezone: string;
+  createdAt: string;
+  counts: { users: number; students: number; teachers: number; invoices: number };
+  admin: { id: string; name: string | null; email: string } | null;
+}
+
+export interface FeeStructure {
+  id: string;
+  name: string;
+  amount: number | string;
+  frequency: string;
+}
+
+export type InvoiceStatus = 'PENDING' | 'PARTIALLY_PAID' | 'PAID' | 'OVERDUE';
+
+export interface Invoice {
+  id: string;
+  amountDue: number | string;
+  amountPaid: number | string;
+  dueDate: string;
+  status: InvoiceStatus;
+  student: { id: string; firstName: string; lastName: string };
+  feeStructure: FeeStructure;
+  payments: { id: string; amount: number | string; method: string; reference: string | null; paidAt: string }[];
+}

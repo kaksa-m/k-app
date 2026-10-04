@@ -10,7 +10,7 @@ interface NavGroup {
   items: { href: string; label: string }[];
 }
 
-const NAV_GROUPS: NavGroup[] = [
+const SCHOOL_NAV: NavGroup[] = [
   { items: [{ href: '/dashboard', label: 'Today' }] },
   {
     heading: 'People & academics',
@@ -31,10 +31,26 @@ const NAV_GROUPS: NavGroup[] = [
       { href: '/announcements', label: 'Announcements' },
     ],
   },
+  {
+    heading: 'Finance',
+    items: [
+      { href: '/fee-structures', label: 'Fee structures' },
+      { href: '/invoices', label: 'Invoices' },
+      { href: '/payments', label: 'Payments' },
+    ],
+  },
 ];
 
-// Wraps every authenticated page: redirects to /login if there's no
-// session, then renders the sidebar + topbar chrome around the page content.
+const PLATFORM_NAV: NavGroup[] = [
+  { items: [{ href: '/platform', label: 'Platform overview' }] },
+  {
+    heading: 'Tenants',
+    items: [
+      { href: '/schools', label: 'Schools' },
+    ],
+  },
+];
+
 export function AppShell({ children }: { children: ReactNode }) {
   const { user, loading, logout } = useAuth();
   const pathname = usePathname();
@@ -46,20 +62,29 @@ export function AppShell({ children }: { children: ReactNode }) {
       router.replace('/login');
       return;
     }
+
+    const isPlatformUser = user.role === 'SUPER_ADMIN';
+    const platformRoute = pathname === '/platform' || pathname.startsWith('/schools');
+    const schoolRoute = !platformRoute;
+
     if (!ALLOWED_ROLES.includes(user.role)) {
-      // Stale session from before this app was restricted to admins —
-      // log out cleanly rather than letting every API call 403.
       logout();
+      return;
     }
-  }, [loading, user, router, logout]);
+    if (isPlatformUser && schoolRoute) {
+      router.replace('/platform');
+      return;
+    }
+    if (!isPlatformUser && platformRoute) {
+      router.replace('/dashboard');
+    }
+  }, [loading, user, pathname, router, logout]);
 
   if (loading || !user || !ALLOWED_ROLES.includes(user.role)) {
-    return (
-      <div className="flex min-h-screen items-center justify-center text-ink-soft font-mono text-sm">
-        Loading…
-      </div>
-    );
+    return <div className="flex min-h-screen items-center justify-center text-ink-soft font-mono text-sm">Loading…</div>;
   }
+
+  const nav = user.role === 'SUPER_ADMIN' ? PLATFORM_NAV : SCHOOL_NAV;
 
   return (
     <div className="flex min-h-screen">
@@ -69,23 +94,13 @@ export function AppShell({ children }: { children: ReactNode }) {
           <span className="font-display text-xl uppercase tracking-wide">Kaksam</span>
         </div>
         <nav className="flex-1 px-3 space-y-4 overflow-y-auto">
-          {NAV_GROUPS.map((group, gi) => (
+          {nav.map((group, gi) => (
             <div key={gi} className="space-y-1">
-              {group.heading && (
-                <div className="px-3 pt-2 pb-1 font-mono text-[10px] uppercase tracking-widest text-chalk/40">
-                  {group.heading}
-                </div>
-              )}
+              {group.heading && <div className="px-3 pt-2 pb-1 font-mono text-[10px] uppercase tracking-widest text-chalk/40">{group.heading}</div>}
               {group.items.map((item) => {
-                const active = pathname?.startsWith(item.href);
+                const active = pathname === item.href || pathname?.startsWith(`${item.href}/`);
                 return (
-                  <Link
-                    key={item.href}
-                    href={item.href}
-                    className={`block rounded px-3 py-2 text-sm font-medium transition-colors ${
-                      active ? 'bg-board-deep text-marigold' : 'text-chalk/80 hover:bg-board-deep hover:text-chalk'
-                    }`}
-                  >
+                  <Link key={item.href} href={item.href} className={`block rounded px-3 py-2 text-sm font-medium transition-colors ${active ? 'bg-board-deep text-marigold' : 'text-chalk/80 hover:bg-board-deep hover:text-chalk'}`}>
                     {item.label}
                   </Link>
                 );
@@ -96,9 +111,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         <div className="px-6 py-5 border-t border-white/10 text-xs">
           <div className="font-medium">{user.name ?? user.email}</div>
           <div className="text-chalk/50 font-mono mt-0.5">{user.role.replace('_', ' ')}</div>
-          <button onClick={logout} className="mt-3 text-margin hover:text-marigold transition-colors font-mono">
-            Log out
-          </button>
+          <button onClick={logout} className="mt-3 text-margin hover:text-marigold transition-colors font-mono">Log out</button>
         </div>
       </aside>
       <main className="flex-1 bg-paper min-h-screen">
