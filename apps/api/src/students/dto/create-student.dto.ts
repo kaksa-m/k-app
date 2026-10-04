@@ -17,9 +17,9 @@ export class CreateStudentDto {
 
   @IsOptional()
   @IsString()
-  sectionId?: string;
+  sectionId?: string | null;
 
   @IsOptional()
   @IsString()
-  parentId?: string;
+  parentId?: string | null;
 }

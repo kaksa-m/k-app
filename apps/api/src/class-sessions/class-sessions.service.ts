@@ -121,7 +121,7 @@ export class ClassSessionsService {
       dayOfWeek: dto.dayOfWeek ?? current.dayOfWeek,
       startTime: dto.startTime ?? current.startTime,
       endTime: dto.endTime ?? current.endTime,
-      room: dto.room ?? current.room,
+      room: dto.room ?? current.room ?? undefined,
     };
     await this.validateRelations(schoolId, merged);
     await this.validateConflicts(schoolId, merged, id);

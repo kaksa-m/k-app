@@ -4,13 +4,14 @@ import { FormEvent, useEffect, useMemo, useState } from 'react';
 import { AppShell } from '../../components/AppShell';
 import { Card, ErrorText, Field, GhostButton, PrimaryButton, Select, TextInput } from '../../components/ui';
 import { api, ApiError } from '../../lib/api';
-import type { Section, Student } from '../../lib/types';
+import type { Parent, Section, Student } from '../../lib/types';
 
-const emptyForm = { firstName: '', lastName: '', rollNumber: '', dateOfBirth: '', sectionId: '' };
+const emptyForm = { firstName: '', lastName: '', rollNumber: '', dateOfBirth: '', sectionId: '', parentId: '' };
 
 export default function StudentsPage() {
   const [students, setStudents] = useState<Student[] | null>(null);
   const [sections, setSections] = useState<Section[]>([]);
+  const [parents, setParents] = useState<Parent[]>([]);
   const [query, setQuery] = useState('');
   const [showInactive, setShowInactive] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -35,6 +36,7 @@ export default function StudentsPage() {
 
   useEffect(() => {
     api.get<Section[]>('/sections').then(setSections).catch(() => {});
+    api.get<Parent[]>('/parents').then(setParents).catch(() => {});
   }, []);
 
   useEffect(() => {
@@ -59,6 +61,7 @@ export default function StudentsPage() {
       rollNumber: student.rollNumber ?? '',
       dateOfBirth: student.dateOfBirth ? student.dateOfBirth.slice(0, 10) : '',
       sectionId: student.section?.id ?? '',
+      parentId: student.parent?.id ?? '',
     });
     setFormError(null);
     setShowForm(true);
@@ -74,7 +77,8 @@ export default function StudentsPage() {
         lastName: form.lastName,
         rollNumber: form.rollNumber || undefined,
         dateOfBirth: form.dateOfBirth || undefined,
-        sectionId: form.sectionId || undefined,
+        sectionId: form.sectionId || null,
+        parentId: form.parentId || null,
       };
       if (editingId) await api.patch(`/students/${editingId}`, body);
       else await api.post('/students', body);
@@ -140,7 +144,7 @@ export default function StudentsPage() {
                 <TextInput required value={form.lastName} onChange={(e) => setForm({ ...form, lastName: e.target.value })} />
               </Field>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
               <Field label="Roll number">
                 <TextInput value={form.rollNumber} onChange={(e) => setForm({ ...form, rollNumber: e.target.value })} />
               </Field>
@@ -152,6 +156,14 @@ export default function StudentsPage() {
                   <option value="">Unassigned</option>
                   {sections.map((s) => (
                     <option key={s.id} value={s.id}>{s.class?.name} — {s.name}</option>
+                  ))}
+                </Select>
+              </Field>
+              <Field label="Parent">
+                <Select value={form.parentId} onChange={(e) => setForm({ ...form, parentId: e.target.value })}>
+                  <option value="">No parent</option>
+                  {parents.map((p) => (
+                    <option key={p.id} value={p.id}>{p.firstName} {p.lastName} — {p.user.email}</option>
                   ))}
                 </Select>
               </Field>
@@ -177,6 +189,7 @@ export default function StudentsPage() {
                 <th className="px-4 py-3">Name</th>
                 <th className="px-4 py-3">Roll No.</th>
                 <th className="px-4 py-3">Class / Section</th>
+                <th className="px-4 py-3">Parent</th>
                 <th className="px-4 py-3">Status</th>
                 <th className="px-4 py-3 text-right">Actions</th>
               </tr>
@@ -187,6 +200,7 @@ export default function StudentsPage() {
                   <td className="px-4 py-3 font-medium text-ink">{s.firstName} {s.lastName}</td>
                   <td className="px-4 py-3 font-mono text-ink-soft">{s.rollNumber ?? '—'}</td>
                   <td className="px-4 py-3 text-ink-soft">{s.section ? `${s.section.class.name} ${s.section.name}` : 'Unassigned'}</td>
+                  <td className="px-4 py-3 text-ink-soft">{s.parent ? `${s.parent.firstName} ${s.parent.lastName}` : '—'}</td>
                   <td className="px-4 py-3">
                     <span className={`font-mono text-[11px] uppercase ${s.isActive ? 'text-green-700' : 'text-margin'}`}>{s.isActive ? 'Active' : 'Inactive'}</span>
                   </td>

@@ -16,6 +16,7 @@ const SCHOOL_ADMIN_NAV: NavGroup[] = [
     heading: 'People & academics',
     items: [
       { href: '/students', label: 'Students' },
+      { href: '/parents', label: 'Parents' },
       { href: '/teachers', label: 'Teachers' },
       { href: '/classes', label: 'Classes' },
       { href: '/academic-years', label: 'Academic years' },
@@ -76,6 +77,7 @@ export function AppShell({ children }: { children: ReactNode }) {
     const isSchoolRoute =
       pathname === '/dashboard' ||
       pathname.startsWith('/students') ||
+      pathname.startsWith('/parents') ||
       pathname.startsWith('/teachers') ||
       pathname.startsWith('/classes') ||
       pathname.startsWith('/academic-years') ||

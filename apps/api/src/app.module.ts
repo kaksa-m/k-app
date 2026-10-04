@@ -16,6 +16,7 @@ import { SubjectsModule } from './subjects/subjects.module';
 import { ClassSessionsModule } from './class-sessions/class-sessions.module';
 import { TeachersModule } from './teachers/teachers.module';
 import { StudentsModule } from './students/students.module';
+import { ParentsModule } from './parents/parents.module';
 import { AttendanceModule } from './attendance/attendance.module';
 import { ClassworkModule } from './classwork/classwork.module';
 import { HomeworkModule } from './homework/homework.module';
@@ -39,6 +40,7 @@ import { PlatformModule } from './platform/platform.module';
     ClassSessionsModule,
     TeachersModule,
     StudentsModule,
+    ParentsModule,
     AttendanceModule,
     ClassworkModule,
     HomeworkModule,

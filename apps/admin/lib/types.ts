@@ -44,6 +44,22 @@ export interface Teacher {
   user: { email: string; isActive: boolean };
 }
 
+
+export interface Parent {
+  id: string;
+  firstName: string;
+  lastName: string;
+  phone: string | null;
+  user: { id: string; email: string; isActive: boolean };
+  students: Array<{
+    id: string;
+    firstName: string;
+    lastName: string;
+    rollNumber: string | null;
+    isActive: boolean;
+  }>;
+}
+
 export interface Student {
   id: string;
   firstName: string;
