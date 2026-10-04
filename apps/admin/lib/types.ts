@@ -75,6 +75,7 @@ export interface Subject {
   id: string;
   name: string;
   code: string | null;
+  classes?: SchoolClass[];
 }
 
 export interface ClassSession {

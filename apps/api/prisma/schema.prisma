@@ -101,6 +101,13 @@ model Class {
 
   school   School    @relation(fields: [schoolId], references: [id], onDelete: Cascade)
   sections Section[]
+  // Which subjects this class offers — e.g. Class 10 might offer Physics/
+  // Chemistry/Biology separately while Class 6 only offers "Science".
+  // Implicit many-to-many: a Subject is a reusable school-wide catalog
+  // entry (so "English" isn't duplicated per class), but each class picks
+  // which subjects apply to it. The Timetable's subject picker filters to
+  // this list once a section (and therefore its class) is selected.
+  subjects Subject[]
 
   @@index([schoolId])
   @@unique([schoolId, name])
@@ -138,6 +145,8 @@ model Subject {
 
   school   School         @relation(fields: [schoolId], references: [id], onDelete: Cascade)
   sessions ClassSession[]
+  // The classes this subject is offered in — see Class.subjects above.
+  classes  Class[]
 
   @@index([schoolId])
   @@unique([schoolId, name])

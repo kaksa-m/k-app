@@ -97,9 +97,11 @@ dashboard, then can browse **Students**, **Teachers**, and **Classes**.
   Section before any read or write.
 
 **Admin web (`apps/admin`)**
-- Login page, auth context backed by localStorage + JWT.
+- Login page (School Admin only — see §6), auth context backed by localStorage + JWT.
 - Today dashboard matching the plan's admin mockup (stat cards + alerts).
-- Students, Teachers, and Classes list pages, all reading live from the API.
+- Full create/list screens: Students, Teachers, Classes & Sections, Subjects,
+  Timetable (weekly view per section + add-session form), Attendance
+  (roster-based, one tap per student), Classwork, Homework, Announcements.
 - Visual language intentionally matches `kaksam-index.html` (same colors,
   fonts, and the register/mark-tile logo) so the admin app doesn't feel
   like a different product from the marketing site.
@@ -109,13 +111,15 @@ dashboard, then can browse **Students**, **Teachers**, and **Classes**.
 Kept out of this first pass so it stays reviewable in one sitting —
 natural next slices, roughly in priority order:
 
-1. **Create/edit forms** in the admin app (Add Student, Add Teacher, Add
-   Class/Section, Take Attendance, Post Classwork/Homework). The API
-   supports all of these already — the admin UI currently only *reads*.
-2. **Teacher and Parent web/mobile views** — the API's
+1. **Edit and delete actions** on existing records — every screen above is
+   currently create + list only. The API supports PATCH/DELETE on nearly
+   everything; the UI doesn't call them yet.
+2. **Fees UI** (fee structures, invoices, recording payments) — the API's
+   `/fees/*` endpoints are complete; nothing in the admin app consumes them
+   yet.
+3. **Teacher and Parent web/mobile views** — the API's
    `/dashboard/teacher/me` and `/dashboard/parent/:studentId` endpoints
    are ready; nothing consumes them yet outside the admin app.
-3. **Timetable builder UI** for Class Sessions (currently API-only).
 4. **The Expo mobile app** — not started.
 5. **Automated tests** — none yet; the NestJS + Jest scaffolding is in
    `package.json` but no test files exist.
@@ -124,6 +128,24 @@ natural next slices, roughly in priority order:
    by comparing `dueDate` directly, which is correct but a stored,
    job-updated status will matter once you add overdue-triggered
    notifications).
+
+## 5b. Database changes since the last migration
+
+If you've already run `prisma migrate dev` once, the schema has since
+picked up a Class ↔ Subject many-to-many relation (a subject is a
+school-wide catalog entry; each class picks which subjects it offers).
+Run this again before pulling the latest API code:
+
+```bash
+cd apps/api
+npx prisma migrate dev --name add-class-subjects
+```
+
+This also fixes a bug where loading a section's timetable
+(`GET /class-sessions?sectionId=...`) threw "Validation failed (numeric
+string is expected)" — a `ParseIntPipe` on an unrelated optional query
+param was running even when that param was completely absent from the
+URL. No migration needed for that fix, just redeploy.
 
 ## 6. Multi-tenancy approach
 

@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Patch, Post, Query } from '@nestjs/common';
 import { SubjectsService } from './subjects.service';
 import { CreateSubjectDto } from './dto/create-subject.dto';
 import { UpdateSubjectDto } from './dto/update-subject.dto';
@@ -16,8 +16,11 @@ export class SubjectsController {
     return this.service.create(user.schoolId!, dto);
   }
 
+  // GET /subjects            — full school catalog (with assigned classes)
+  // GET /subjects?classId=…  — only subjects offered by this class
   @Get()
-  findAll(@CurrentUser() user: AuthenticatedUser) {
+  findAll(@CurrentUser() user: AuthenticatedUser, @Query('classId') classId?: string) {
+    if (classId) return this.service.findForClass(user.schoolId!, classId);
     return this.service.findAll(user.schoolId!);
   }
 

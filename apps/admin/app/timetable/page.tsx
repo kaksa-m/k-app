@@ -1,6 +1,7 @@
 'use client';
 
 import { FormEvent, useEffect, useState } from 'react';
+import Link from 'next/link';
 import { AppShell } from '../../components/AppShell';
 import { Card, ErrorText, Field, GhostButton, PrimaryButton, Select, TextInput } from '../../components/ui';
 import { api, ApiError } from '../../lib/api';
@@ -32,7 +33,6 @@ export default function TimetablePage() {
 
   useEffect(() => {
     api.get<Section[]>('/sections').then(setSections).catch(() => {});
-    api.get<Subject[]>('/subjects').then(setSubjects).catch(() => {});
     api.get<Teacher[]>('/teachers').then(setTeachers).catch(() => {});
   }, []);
 
@@ -44,10 +44,25 @@ export default function TimetablePage() {
       .catch((err) => setError(err instanceof ApiError ? err.message : 'Failed to load timetable.'));
   }
 
+  const selectedSection = sections.find((s) => s.id === sectionId);
+
   useEffect(() => {
     setShowForm(false);
-    if (sectionId) loadSessions(sectionId);
-    else setSessions(null);
+    setForm(emptyForm);
+    if (!sectionId) {
+      setSessions(null);
+      setSubjects([]);
+      return;
+    }
+    loadSessions(sectionId);
+    // Subjects are scoped per class — only show the ones this section's
+    // class actually offers (assigned on the Subjects page).
+    if (selectedSection?.classId) {
+      api
+        .get<Subject[]>(`/subjects?classId=${selectedSection.classId}`)
+        .then(setSubjects)
+        .catch(() => setSubjects([]));
+    }
   }, [sectionId]);
 
   async function handleSubmit(e: FormEvent) {
@@ -112,7 +127,19 @@ export default function TimetablePage() {
         <p className="text-ink-soft text-sm">Pick a section above to see or build its weekly timetable.</p>
       )}
 
-      {sectionId && showForm && (
+      {sectionId && showForm && subjects.length === 0 && (
+        <Card className="mb-6">
+          <p className="text-sm text-ink-soft">
+            {selectedSection?.class?.name} doesn't have any subjects assigned yet —{' '}
+            <Link href="/subjects" className="text-margin hover:text-marigold-deep underline">
+              assign some on the Subjects page
+            </Link>{' '}
+            first, then come back here.
+          </p>
+        </Card>
+      )}
+
+      {sectionId && showForm && subjects.length > 0 && (
         <Card className="mb-6">
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="grid grid-cols-2 gap-4">

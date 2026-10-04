@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, Param, ParseIntPipe, Patch, Post, Query } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Patch, Post, Query } from '@nestjs/common';
 import { ClassSessionsService } from './class-sessions.service';
 import { CreateClassSessionDto } from './dto/create-class-session.dto';
 import { UpdateClassSessionDto } from './dto/update-class-session.dto';
@@ -18,15 +18,25 @@ export class ClassSessionsController {
 
   // GET /class-sessions?sectionId=...  — a section's weekly timetable
   // GET /class-sessions?teacherId=...&dayOfWeek=0  — "today's classes" for a teacher
+  //
+  // dayOfWeek is parsed manually (not via ParseIntPipe) because Nest runs
+  // every parameter pipe on every call to this handler regardless of which
+  // query params are actually present — ParseIntPipe's `optional` flag
+  // doesn't reliably skip the case where the param is simply absent from
+  // the URL, which threw "Validation failed (numeric string is expected)"
+  // on every plain ?sectionId=... request.
   @Get()
   findAll(
     @CurrentUser() user: AuthenticatedUser,
     @Query('sectionId') sectionId?: string,
     @Query('teacherId') teacherId?: string,
-    @Query('dayOfWeek', new ParseIntPipe({ optional: true })) dayOfWeek?: number,
+    @Query('dayOfWeek') dayOfWeekRaw?: string,
   ) {
     if (sectionId) return this.service.findForSection(user.schoolId!, sectionId);
-    if (teacherId) return this.service.findForTeacher(user.schoolId!, teacherId, dayOfWeek);
+    if (teacherId) {
+      const dayOfWeek = dayOfWeekRaw !== undefined && dayOfWeekRaw !== '' ? Number(dayOfWeekRaw) : undefined;
+      return this.service.findForTeacher(user.schoolId!, teacherId, dayOfWeek);
+    }
     return [];
   }
 
