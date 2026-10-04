@@ -17,7 +17,15 @@ export class AnnouncementsService {
     if (dto.audience !== 'SECTION' && dto.sectionId) {
       throw new ForbiddenException('sectionId is only valid for SECTION announcements.');
     }
-    return this.prisma.announcement.create({ data: { ...dto, schoolId } });
+    return this.prisma.announcement.create({
+      data: {
+        schoolId,
+        title: dto.title.trim(),
+        body: dto.body.trim(),
+        audience: dto.audience,
+        sectionId: dto.sectionId,
+      },
+    });
   }
 
   findAll(schoolId: string) {

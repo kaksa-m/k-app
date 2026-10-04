@@ -32,6 +32,7 @@ const SCHOOL_ADMIN_NAV: NavGroup[] = [
       { href: '/classwork', label: 'Classwork' },
       { href: '/homework', label: 'Homework' },
       { href: '/announcements', label: 'Announcements' },
+      { href: '/communication', label: 'Communication center' },
     ],
   },
   {
@@ -108,6 +109,7 @@ export function AppShell({ children }: { children: ReactNode }) {
       pathname.startsWith('/classwork') ||
       pathname.startsWith('/homework') ||
       pathname.startsWith('/announcements') ||
+      pathname.startsWith('/communication') ||
       pathname.startsWith('/fee-structures') ||
       pathname.startsWith('/invoices') ||
       pathname.startsWith('/payments') ||
