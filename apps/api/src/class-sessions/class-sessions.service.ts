@@ -43,8 +43,47 @@ export class ClassSessionsService {
     }
   }
 
+  private overlaps(startA: string, endA: string, startB: string, endB: string) {
+    return startA < endB && endA > startB;
+  }
+
+  private async validateConflicts(
+    schoolId: string,
+    dto: { sectionId: string; teacherId: string; dayOfWeek: number; startTime: string; endTime: string; room?: string | null },
+    excludeId?: string,
+  ) {
+    const sessions = await this.prisma.classSession.findMany({
+      where: {
+        dayOfWeek: dto.dayOfWeek,
+        ...(excludeId ? { NOT: { id: excludeId } } : {}),
+        OR: [
+          { sectionId: dto.sectionId },
+          { teacherId: dto.teacherId },
+          ...(dto.room ? [{ room: dto.room }] : []),
+        ],
+        section: { schoolId },
+      },
+      select: { id: true, sectionId: true, teacherId: true, room: true, startTime: true, endTime: true },
+    });
+
+    for (const session of sessions) {
+      if (!this.overlaps(dto.startTime, dto.endTime, session.startTime, session.endTime)) continue;
+
+      if (session.sectionId === dto.sectionId) {
+        throw new BadRequestException('This section already has a class scheduled during that time.');
+      }
+      if (session.teacherId === dto.teacherId) {
+        throw new BadRequestException('This teacher already has a class scheduled during that time.');
+      }
+      if (dto.room && session.room === dto.room) {
+        throw new BadRequestException('This room is already booked during that time.');
+      }
+    }
+  }
+
   async create(schoolId: string, dto: CreateClassSessionDto) {
     await this.validateRelations(schoolId, dto);
+    await this.validateConflicts(schoolId, dto);
     return this.prisma.classSession.create({ data: dto });
   }
 
@@ -79,10 +118,13 @@ export class ClassSessionsService {
       sectionId: dto.sectionId ?? current.sectionId,
       subjectId: dto.subjectId ?? current.subjectId,
       teacherId: dto.teacherId ?? current.teacherId,
+      dayOfWeek: dto.dayOfWeek ?? current.dayOfWeek,
       startTime: dto.startTime ?? current.startTime,
       endTime: dto.endTime ?? current.endTime,
+      room: dto.room ?? current.room,
     };
     await this.validateRelations(schoolId, merged);
+    await this.validateConflicts(schoolId, merged, id);
     return this.prisma.classSession.update({ where: { id }, data: dto });
   }
 

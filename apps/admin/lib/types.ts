@@ -30,6 +30,8 @@ export interface Section {
   classId: string;
   academicYearId: string;
   class?: SchoolClass;
+  academicYear?: AcademicYear;
+  classTeacher?: Teacher | null;
   students?: Student[];
 }
 

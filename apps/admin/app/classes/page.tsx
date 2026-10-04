@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { FormEvent, useEffect, useState } from 'react';
 import { AppShell } from '../../components/AppShell';
 import { Card, ErrorText, Field, GhostButton, PrimaryButton, Select, TextInput } from '../../components/ui';
@@ -139,7 +140,7 @@ export default function ClassesPage() {
 
       {academicYears.length === 0 && classes && classes.length > 0 && (
         <p className="text-xs text-margin font-mono mb-4">
-          No academic year exists yet — create one via the API (POST /academic-years) before adding sections.
+          No academic year exists yet — <Link href="/academic-years" className="underline hover:text-marigold-deep">create one here</Link> before adding sections.
         </p>
       )}
 

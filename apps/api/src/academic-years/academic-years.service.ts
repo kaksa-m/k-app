@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../common/prisma/prisma.service';
 import { CreateAcademicYearDto } from './dto/create-academic-year.dto';
 import { UpdateAcademicYearDto } from './dto/update-academic-year.dto';
@@ -7,9 +7,41 @@ import { UpdateAcademicYearDto } from './dto/update-academic-year.dto';
 export class AcademicYearsService {
   constructor(private prisma: PrismaService) {}
 
-  create(schoolId: string, dto: CreateAcademicYearDto) {
-    return this.prisma.academicYear.create({
-      data: { ...dto, schoolId },
+  private validateDates(startDate: string | Date, endDate: string | Date) {
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+    if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime()) || start >= end) {
+      throw new BadRequestException('End date must be later than start date.');
+    }
+  }
+
+  private async ensureUniqueName(schoolId: string, name: string, excludeId?: string) {
+    const existing = await this.prisma.academicYear.findFirst({
+      where: {
+        schoolId,
+        name,
+        ...(excludeId ? { NOT: { id: excludeId } } : {}),
+      },
+      select: { id: true },
+    });
+    if (existing) throw new ConflictException('An academic year with this name already exists.');
+  }
+
+  async create(schoolId: string, dto: CreateAcademicYearDto) {
+    this.validateDates(dto.startDate, dto.endDate);
+    await this.ensureUniqueName(schoolId, dto.name);
+
+    return this.prisma.$transaction(async (tx) => {
+      if (dto.isCurrent) {
+        await tx.academicYear.updateMany({
+          where: { schoolId, isCurrent: true },
+          data: { isCurrent: false },
+        });
+      }
+
+      return tx.academicYear.create({
+        data: { ...dto, schoolId },
+      });
     });
   }
 
@@ -27,12 +59,35 @@ export class AcademicYearsService {
   }
 
   async update(schoolId: string, id: string, dto: UpdateAcademicYearDto) {
-    await this.findOne(schoolId, id); // 404s if it doesn't belong to this school
-    return this.prisma.academicYear.update({ where: { id }, data: dto });
+    const current = await this.findOne(schoolId, id);
+    const startDate = dto.startDate ?? current.startDate;
+    const endDate = dto.endDate ?? current.endDate;
+    const name = dto.name ?? current.name;
+
+    this.validateDates(startDate, endDate);
+    await this.ensureUniqueName(schoolId, name, id);
+
+    return this.prisma.$transaction(async (tx) => {
+      if (dto.isCurrent === true) {
+        await tx.academicYear.updateMany({
+          where: { schoolId, isCurrent: true, NOT: { id } },
+          data: { isCurrent: false },
+        });
+      }
+
+      return tx.academicYear.update({
+        where: { id },
+        data: dto,
+      });
+    });
   }
 
   async remove(schoolId: string, id: string) {
-    await this.findOne(schoolId, id);
+    const year = await this.findOne(schoolId, id);
+    if (year.isCurrent) {
+      throw new BadRequestException('Set another academic year as current before deleting this one.');
+    }
+
     await this.prisma.academicYear.delete({ where: { id } });
     return { success: true };
   }

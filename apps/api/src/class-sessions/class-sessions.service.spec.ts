@@ -13,6 +13,7 @@ describe('ClassSessionsService', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+    prisma.classSession.findMany.mockResolvedValue([]);
     service = new ClassSessionsService(prisma);
   });
 
@@ -48,6 +49,23 @@ describe('ClassSessionsService', () => {
       sectionId: 'section-a', subjectId: 'subject-a', teacherId: 'teacher-a',
       dayOfWeek: 1, startTime: '10:00', endTime: '09:00', room: '101',
     } as any)).rejects.toBeInstanceOf(BadRequestException);
+  });
+
+  it('rejects overlapping section sessions', async () => {
+    prisma.section.findFirst.mockResolvedValue({ id: 'section-a', classId: 'class-a' });
+    prisma.subject.findFirst.mockResolvedValue({ id: 'subject-a' });
+    prisma.class.findFirst.mockResolvedValue({ id: 'class-a' });
+    prisma.teacher.findFirst.mockResolvedValue({ id: 'teacher-a' });
+    prisma.classSession.findMany.mockResolvedValue([
+      { id: 'existing', sectionId: 'section-a', teacherId: 'teacher-b', room: '101', startTime: '09:30', endTime: '10:30' },
+    ]);
+
+    await expect(service.create('school-a', {
+      sectionId: 'section-a', subjectId: 'subject-a', teacherId: 'teacher-a',
+      dayOfWeek: 1, startTime: '10:00', endTime: '11:00', room: '102',
+    } as any)).rejects.toBeInstanceOf(BadRequestException);
+
+    expect(prisma.classSession.create).not.toHaveBeenCalled();
   });
 
   it('validates merged relations on update', async () => {

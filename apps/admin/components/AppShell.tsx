@@ -18,6 +18,7 @@ const SCHOOL_ADMIN_NAV: NavGroup[] = [
       { href: '/students', label: 'Students' },
       { href: '/teachers', label: 'Teachers' },
       { href: '/classes', label: 'Classes' },
+      { href: '/academic-years', label: 'Academic years' },
       { href: '/subjects', label: 'Subjects' },
       { href: '/timetable', label: 'Timetable' },
     ],
@@ -77,6 +78,7 @@ export function AppShell({ children }: { children: ReactNode }) {
       pathname.startsWith('/students') ||
       pathname.startsWith('/teachers') ||
       pathname.startsWith('/classes') ||
+      pathname.startsWith('/academic-years') ||
       pathname.startsWith('/subjects') ||
       pathname.startsWith('/timetable') ||
       pathname.startsWith('/attendance') ||
