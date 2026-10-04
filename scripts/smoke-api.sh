@@ -13,7 +13,7 @@ TOKEN=$(printf '%s' "$LOGIN" | sed -n 's/.*"accessToken":"\([^"]*\)".*/\1/p')
 test -n "$TOKEN"
 
 echo "[3/5] authenticated dashboard"
-curl -fsS -H "Authorization: Bearer $TOKEN" "$BASE_URL/dashboard" >/dev/null
+curl -fsS -H "Authorization: Bearer $TOKEN" "$BASE_URL/dashboard/admin" >/dev/null
 
 echo "[4/5] notifications"
 curl -fsS -H "Authorization: Bearer $TOKEN" "$BASE_URL/notifications/unread-count" >/dev/null
