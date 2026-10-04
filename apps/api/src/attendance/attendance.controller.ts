@@ -12,10 +12,9 @@ export class AttendanceController {
   @Roles(Role.TEACHER, Role.SCHOOL_ADMIN)
   @Post()
   mark(@CurrentUser() user: AuthenticatedUser, @Body() dto: MarkAttendanceDto) {
-    return this.service.mark(user.schoolId!, dto);
+    return this.service.mark(user.schoolId!, user.userId, user.role, dto);
   }
 
-  // GET /attendance/session/:classSessionId?date=2026-08-26
   @Roles(Role.TEACHER, Role.SCHOOL_ADMIN)
   @Get('session/:classSessionId')
   forSession(
@@ -23,10 +22,9 @@ export class AttendanceController {
     @Param('classSessionId') classSessionId: string,
     @Query('date') date: string,
   ) {
-    return this.service.forSession(user.schoolId!, classSessionId, date);
+    return this.service.forSession(user.schoolId!, classSessionId, date, user.role, user.userId);
   }
 
-  // GET /attendance/student/:studentId?from=...&to=...
   @Get('student/:studentId')
   forStudent(
     @CurrentUser() user: AuthenticatedUser,

@@ -1,5 +1,5 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
-import { InvoiceStatus } from '@prisma/client';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { InvoiceStatus, Prisma } from '@prisma/client';
 import { PrismaService } from '../common/prisma/prisma.service';
 import { CreateFeeStructureDto } from './dto/create-fee-structure.dto';
 import { CreateInvoiceDto } from './dto/create-invoice.dto';
@@ -65,22 +65,26 @@ export class FeesService {
   // ---- Payments ----
 
   async recordPayment(schoolId: string, invoiceId: string, dto: RecordPaymentDto) {
-    const invoice = await this.prisma.invoice.findFirst({ where: { id: invoiceId, schoolId } });
-    if (!invoice) throw new NotFoundException('Invoice not found.');
-
     return this.prisma.$transaction(async (tx) => {
+      const invoice = await tx.invoice.findFirst({ where: { id: invoiceId, schoolId } });
+      if (!invoice) throw new NotFoundException('Invoice not found.');
+
+      const paymentAmount = new Prisma.Decimal(dto.amount);
+      const balance = invoice.amountDue.minus(invoice.amountPaid);
+      if (paymentAmount.greaterThan(balance)) {
+        throw new BadRequestException(`Payment exceeds the invoice balance of ${balance.toFixed(2)}.`);
+      }
+
       const payment = await tx.payment.create({
-        data: { invoiceId, amount: dto.amount, method: dto.method, reference: dto.reference },
+        data: { invoiceId, amount: paymentAmount, method: dto.method, reference: dto.reference },
       });
 
-      const newAmountPaid = Number(invoice.amountPaid) + dto.amount;
-      const amountDue = Number(invoice.amountDue);
-      const status: InvoiceStatus =
-        newAmountPaid >= amountDue
-          ? InvoiceStatus.PAID
-          : newAmountPaid > 0
-            ? InvoiceStatus.PARTIALLY_PAID
-            : InvoiceStatus.PENDING;
+      const newAmountPaid = invoice.amountPaid.plus(paymentAmount);
+      const status: InvoiceStatus = newAmountPaid.greaterThanOrEqualTo(invoice.amountDue)
+        ? InvoiceStatus.PAID
+        : newAmountPaid.greaterThan(0)
+          ? InvoiceStatus.PARTIALLY_PAID
+          : InvoiceStatus.PENDING;
 
       await tx.invoice.update({
         where: { id: invoiceId },
@@ -88,6 +92,6 @@ export class FeesService {
       });
 
       return payment;
-    });
+    }, { isolationLevel: 'Serializable' });
   }
 }

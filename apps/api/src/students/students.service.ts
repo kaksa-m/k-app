@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../common/prisma/prisma.service';
 import { CreateStudentDto } from './dto/create-student.dto';
 import { UpdateStudentDto } from './dto/update-student.dto';
@@ -7,7 +7,19 @@ import { UpdateStudentDto } from './dto/update-student.dto';
 export class StudentsService {
   constructor(private prisma: PrismaService) {}
 
-  create(schoolId: string, dto: CreateStudentDto) {
+  private async validateRelations(schoolId: string, dto: Partial<CreateStudentDto>) {
+    if (dto.sectionId) {
+      const section = await this.prisma.section.findFirst({ where: { id: dto.sectionId, schoolId } });
+      if (!section) throw new ForbiddenException('Section does not belong to your school.');
+    }
+    if (dto.parentId) {
+      const parent = await this.prisma.parent.findFirst({ where: { id: dto.parentId, schoolId } });
+      if (!parent) throw new ForbiddenException('Parent does not belong to your school.');
+    }
+  }
+
+  async create(schoolId: string, dto: CreateStudentDto) {
+    await this.validateRelations(schoolId, dto);
     return this.prisma.student.create({
       data: {
         schoolId,
@@ -40,6 +52,7 @@ export class StudentsService {
 
   async update(schoolId: string, id: string, dto: UpdateStudentDto) {
     await this.findOne(schoolId, id);
+    await this.validateRelations(schoolId, dto);
     const { dateOfBirth, ...rest } = dto;
     return this.prisma.student.update({
       where: { id },
@@ -47,8 +60,6 @@ export class StudentsService {
     });
   }
 
-  // Soft delete: students carry attendance/invoice history that must
-  // stay intact, so a transfer-out or withdrawal just flips isActive.
   async remove(schoolId: string, id: string) {
     await this.findOne(schoolId, id);
     await this.prisma.student.update({ where: { id }, data: { isActive: false } });

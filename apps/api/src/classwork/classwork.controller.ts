@@ -12,7 +12,7 @@ export class ClassworkController {
   @Roles(Role.TEACHER, Role.SCHOOL_ADMIN)
   @Post()
   create(@CurrentUser() user: AuthenticatedUser, @Body() dto: CreateClassworkDto) {
-    return this.service.create(user.schoolId!, dto);
+    return this.service.create(user.schoolId!, user.userId, user.role, dto);
   }
 
   @Get()
@@ -23,6 +23,6 @@ export class ClassworkController {
   @Roles(Role.TEACHER, Role.SCHOOL_ADMIN)
   @Delete(':id')
   remove(@CurrentUser() user: AuthenticatedUser, @Param('id') id: string) {
-    return this.service.remove(user.schoolId!, id);
+    return this.service.remove(user.schoolId!, id, user.userId, user.role);
   }
 }

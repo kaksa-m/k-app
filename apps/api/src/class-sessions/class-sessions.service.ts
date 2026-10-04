@@ -1,31 +1,50 @@
-import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../common/prisma/prisma.service';
 import { CreateClassSessionDto } from './dto/create-class-session.dto';
 import { UpdateClassSessionDto } from './dto/update-class-session.dto';
 
-// ClassSession has no schoolId column of its own — it's scoped through
-// Section, which does. Every method below verifies the section (and, on
-// create, the subject/teacher) actually belongs to the caller's school
-// before touching anything, so one school can never read or write
-// another school's timetable.
 @Injectable()
 export class ClassSessionsService {
   constructor(private prisma: PrismaService) {}
 
-  private async assertSectionInSchool(schoolId: string, sectionId: string) {
-    const section = await this.prisma.section.findFirst({ where: { id: sectionId, schoolId } });
-    if (!section) throw new ForbiddenException('Section does not belong to your school.');
+  private async validateRelations(schoolId: string, dto: Partial<CreateClassSessionDto>) {
+    const section = dto.sectionId
+      ? await this.prisma.section.findFirst({
+          where: { id: dto.sectionId, schoolId },
+          select: { id: true, classId: true },
+        })
+      : null;
+    if (dto.sectionId && !section) throw new ForbiddenException('Section does not belong to your school.');
+
+    if (dto.subjectId) {
+      const subject = await this.prisma.subject.findFirst({
+        where: { id: dto.subjectId, schoolId },
+        select: { id: true },
+      });
+      if (!subject) throw new ForbiddenException('Subject does not belong to your school.');
+
+      const classId = section?.classId;
+      if (classId) {
+        const offered = await this.prisma.class.findFirst({
+          where: { id: classId, schoolId, subjects: { some: { id: dto.subjectId } } },
+          select: { id: true },
+        });
+        if (!offered) throw new ForbiddenException('Subject is not offered for this class.');
+      }
+    }
+
+    if (dto.teacherId) {
+      const teacher = await this.prisma.teacher.findFirst({ where: { id: dto.teacherId, schoolId }, select: { id: true } });
+      if (!teacher) throw new ForbiddenException('Teacher does not belong to your school.');
+    }
+
+    if (dto.startTime && dto.endTime && dto.startTime >= dto.endTime) {
+      throw new BadRequestException('endTime must be later than startTime.');
+    }
   }
 
   async create(schoolId: string, dto: CreateClassSessionDto) {
-    await this.assertSectionInSchool(schoolId, dto.sectionId);
-    const [subject, teacher] = await Promise.all([
-      this.prisma.subject.findFirst({ where: { id: dto.subjectId, schoolId } }),
-      this.prisma.teacher.findFirst({ where: { id: dto.teacherId, schoolId } }),
-    ]);
-    if (!subject) throw new ForbiddenException('Subject does not belong to your school.');
-    if (!teacher) throw new ForbiddenException('Teacher does not belong to your school.');
-
+    await this.validateRelations(schoolId, dto);
     return this.prisma.classSession.create({ data: dto });
   }
 
@@ -55,7 +74,15 @@ export class ClassSessionsService {
   }
 
   async update(schoolId: string, id: string, dto: UpdateClassSessionDto) {
-    await this.findOne(schoolId, id);
+    const current = await this.findOne(schoolId, id);
+    const merged = {
+      sectionId: dto.sectionId ?? current.sectionId,
+      subjectId: dto.subjectId ?? current.subjectId,
+      teacherId: dto.teacherId ?? current.teacherId,
+      startTime: dto.startTime ?? current.startTime,
+      endTime: dto.endTime ?? current.endTime,
+    };
+    await this.validateRelations(schoolId, merged);
     return this.prisma.classSession.update({ where: { id }, data: dto });
   }
 
