@@ -18,8 +18,17 @@ export class StudentsController {
 
   @Roles(Role.SCHOOL_ADMIN, Role.TEACHER)
   @Get()
-  findAll(@CurrentUser() user: AuthenticatedUser, @Query('sectionId') sectionId?: string) {
-    return this.service.findAll(user.schoolId!, { sectionId });
+  findAll(
+    @CurrentUser() user: AuthenticatedUser,
+    @Query('sectionId') sectionId?: string,
+    @Query('q') q?: string,
+    @Query('includeInactive') includeInactive?: string,
+  ) {
+    return this.service.findAll(user.schoolId!, {
+      sectionId,
+      q,
+      includeInactive: user.role === Role.SCHOOL_ADMIN && includeInactive === 'true',
+    });
   }
 
   @Get(':id')

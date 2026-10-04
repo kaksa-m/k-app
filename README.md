@@ -167,16 +167,6 @@ depth without changing the application code.
 - Add integration tests for the tenant-isolation logic specifically —
   that's the one category of bug that's expensive to find late.
 
-## Platform admin
+## Phase 1B — Student Management
 
-The admin app now has a dedicated SUPER_ADMIN surface for tenant administration:
-- `/platform` — platform overview
-- `/schools` — list and create schools, including the first School Admin
-- `/schools/:id` — school tenant summary
-
-Seed credentials:
-- SUPER_ADMIN: `superadmin@kaksam.test` / `password123`
-- SCHOOL_ADMIN: `admin@greenvalley.test` / `password123`
-
-School admins also have Finance navigation for fee structures, invoices, and payments.
-`POST /auth/register-school` is restricted to SUPER_ADMIN; the UI onboarding path is `/schools`.
+The School Admin student register now supports server-side search by name/roll number, active/inactive visibility, editing, section assignment, date of birth, and safe deactivation. Student queries remain tenant-scoped by `schoolId`; teachers cannot request inactive records. API tests cover cross-tenant section validation, tenant-scoped search, and soft deactivation.

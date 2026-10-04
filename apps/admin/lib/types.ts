@@ -47,7 +47,10 @@ export interface Student {
   firstName: string;
   lastName: string;
   rollNumber: string | null;
-  section?: { name: string; class: { name: string } } | null;
+  dateOfBirth?: string | null;
+  isActive: boolean;
+  section?: { id: string; name: string; class: { name: string } } | null;
+  parent?: { id: string; firstName: string; lastName: string; phone: string | null } | null;
 }
 
 export interface AdminDashboard {
@@ -134,40 +137,54 @@ export interface Announcement {
 // the dayOfWeek picker consistently across Attendance/Classwork/Homework forms.
 export const DAY_LABELS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 
-export interface PlatformOverview {
-  schools: number;
-  users: number;
-  students: number;
-  outstandingFees: number;
-}
-
-export interface SchoolSummary {
-  id: string;
-  name: string;
-  slug: string;
-  city: string | null;
-  timezone: string;
-  createdAt: string;
-  counts: { users: number; students: number; teachers: number; invoices: number };
-  admin: { id: string; name: string | null; email: string } | null;
-}
-
-export interface FeeStructure {
+export type FeeStructure = {
   id: string;
   name: string;
   amount: number | string;
   frequency: string;
-}
+  schoolId?: string;
+  createdAt?: string;
+  updatedAt?: string;
+};
 
-export type InvoiceStatus = 'PENDING' | 'PARTIALLY_PAID' | 'PAID' | 'OVERDUE';
-
-export interface Invoice {
+export type Invoice = {
   id: string;
+  invoiceNumber?: string;
+  studentId: string;
+  student: Student;
+  feeStructureId?: string;
+  feeStructure: FeeStructure;
   amountDue: number | string;
   amountPaid: number | string;
   dueDate: string;
-  status: InvoiceStatus;
-  student: { id: string; firstName: string; lastName: string };
-  feeStructure: FeeStructure;
-  payments: { id: string; amount: number | string; method: string; reference: string | null; paidAt: string }[];
-}
+  status: string;
+  createdAt?: string;
+  updatedAt?: string;
+};
+
+export type PlatformOverview = {
+  schools: number;
+  users: number;
+  students: number;
+  outstandingFees: number;
+};
+
+export type SchoolSummary = {
+  id: string;
+  name: string;
+  slug: string;
+  city?: string | null;
+  timezone: string;
+  createdAt?: string;
+  counts: {
+    users: number;
+    students: number;
+    teachers: number;
+    invoices: number;
+  };
+  admin: {
+    id: string;
+    name: string;
+    email: string;
+  } | null;
+};

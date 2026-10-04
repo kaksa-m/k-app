@@ -12,17 +12,6 @@ const SALT_ROUNDS = 12;
 async function main() {
   const passwordHash = await bcrypt.hash('password123', SALT_ROUNDS);
 
-  await prisma.user.upsert({
-    where: { email: 'superadmin@kaksam.test' },
-    update: {},
-    create: {
-      email: 'superadmin@kaksam.test',
-      passwordHash,
-      role: Role.SUPER_ADMIN,
-      name: 'KAKSAM Platform Admin',
-    },
-  });
-
   const school = await prisma.school.upsert({
     where: { slug: 'green-valley' },
     update: {},
@@ -245,7 +234,6 @@ async function main() {
   }
 
   console.log('Seed complete.');
-  console.log('  Super admin login:    superadmin@kaksam.test / password123');
   console.log('  School admin login:  admin@greenvalley.test / password123');
   console.log('  Teacher login:       priya@greenvalley.test / password123');
   console.log('  Parent login:        parent1@greenvalley.test / password123');

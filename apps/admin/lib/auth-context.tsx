@@ -8,7 +8,7 @@ import type { AuthUser, LoginResponse } from './types';
 interface AuthContextValue {
   user: AuthUser | null;
   loading: boolean;
-  login: (email: string, password: string) => Promise<AuthUser>;
+  login: (email: string, password: string) => Promise<void>;
   logout: () => void;
 }
 
@@ -52,7 +52,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setToken(res.accessToken);
     window.localStorage.setItem(USER_KEY, JSON.stringify(res.user));
     setUser(res.user);
-    return res.user;
   }
 
   function logout() {

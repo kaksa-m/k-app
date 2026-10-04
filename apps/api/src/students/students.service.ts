@@ -23,9 +23,9 @@ export class StudentsService {
     return this.prisma.student.create({
       data: {
         schoolId,
-        firstName: dto.firstName,
-        lastName: dto.lastName,
-        rollNumber: dto.rollNumber,
+        firstName: dto.firstName.trim(),
+        lastName: dto.lastName.trim(),
+        rollNumber: dto.rollNumber?.trim() || undefined,
         dateOfBirth: dto.dateOfBirth ? new Date(dto.dateOfBirth) : undefined,
         sectionId: dto.sectionId,
         parentId: dto.parentId,
@@ -33,11 +33,25 @@ export class StudentsService {
     });
   }
 
-  findAll(schoolId: string, filters: { sectionId?: string }) {
+  findAll(schoolId: string, filters: { sectionId?: string; q?: string; includeInactive?: boolean }) {
+    const q = filters.q?.trim();
     return this.prisma.student.findMany({
-      where: { schoolId, isActive: true, ...filters },
+      where: {
+        schoolId,
+        ...(filters.includeInactive ? {} : { isActive: true }),
+        ...(filters.sectionId ? { sectionId: filters.sectionId } : {}),
+        ...(q
+          ? {
+              OR: [
+                { firstName: { contains: q, mode: 'insensitive' } },
+                { lastName: { contains: q, mode: 'insensitive' } },
+                { rollNumber: { contains: q, mode: 'insensitive' } },
+              ],
+            }
+          : {}),
+      },
       include: { section: { include: { class: true } }, parent: true },
-      orderBy: [{ firstName: 'asc' }],
+      orderBy: [{ isActive: 'desc' }, { firstName: 'asc' }, { lastName: 'asc' }],
     });
   }
 
@@ -53,10 +67,16 @@ export class StudentsService {
   async update(schoolId: string, id: string, dto: UpdateStudentDto) {
     await this.findOne(schoolId, id);
     await this.validateRelations(schoolId, dto);
-    const { dateOfBirth, ...rest } = dto;
+    const { dateOfBirth, firstName, lastName, rollNumber, ...rest } = dto;
     return this.prisma.student.update({
       where: { id },
-      data: { ...rest, dateOfBirth: dateOfBirth ? new Date(dateOfBirth) : undefined },
+      data: {
+        ...rest,
+        ...(firstName !== undefined ? { firstName: firstName.trim() } : {}),
+        ...(lastName !== undefined ? { lastName: lastName.trim() } : {}),
+        ...(rollNumber !== undefined ? { rollNumber: rollNumber.trim() || null } : {}),
+        ...(dateOfBirth !== undefined ? { dateOfBirth: dateOfBirth ? new Date(dateOfBirth) : null } : {}),
+      },
     });
   }
 

@@ -18,8 +18,8 @@ export default function LoginPage() {
     setError(null);
     setSubmitting(true);
     try {
-      const loggedInUser = await login(email, password);
-      router.push(loggedInUser.role === 'SUPER_ADMIN' ? '/platform' : '/dashboard');
+      await login(email, password);
+      router.push('/dashboard');
     } catch (err) {
       setError(err instanceof ApiError ? err.message : 'Something went wrong. Please try again.');
     } finally {
