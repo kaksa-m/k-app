@@ -145,6 +145,7 @@ model Subject {
 
   school   School         @relation(fields: [schoolId], references: [id], onDelete: Cascade)
   sessions ClassSession[]
+  examResults ExamResult[]
   // The classes this subject is offered in — see Class.subjects above.
   classes  Class[]
 
@@ -237,6 +238,7 @@ model Student {
   parent      Parent?      @relation(fields: [parentId], references: [id])
   attendance  Attendance[]
   invoices    Invoice[]
+  examResults ExamResult[]
 
   @@index([schoolId])
   @@index([sectionId])
@@ -332,9 +334,30 @@ model Exam {
   endDate        DateTime
 
   academicYear AcademicYear @relation(fields: [academicYearId], references: [id], onDelete: Cascade)
+  results      ExamResult[]
 
   @@index([academicYearId])
   @@map("exams")
+}
+
+model ExamResult {
+  id        String   @id @default(cuid())
+  examId    String
+  studentId String
+  subjectId String
+  marks     Decimal  @db.Decimal(6, 2)
+  maxMarks  Decimal  @db.Decimal(6, 2)
+  grade     String?
+  remarks   String?
+
+  exam    Exam    @relation(fields: [examId], references: [id], onDelete: Cascade)
+  student Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  subject Subject @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+
+  @@unique([examId, studentId, subjectId])
+  @@index([studentId])
+  @@index([examId])
+  @@map("exam_results")
 }
 
 // ---------------------------------------------------------------------------

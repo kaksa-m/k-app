@@ -316,6 +316,34 @@ async function main() {
   );
 
   // ---------------------------------------------------------------------------
+  // STUDENT LOGIN
+  // ---------------------------------------------------------------------------
+
+  const studentUser = await prisma.user.upsert({
+    where: { email: 'aarav@greenvalley.test' },
+    update: {
+      schoolId: school.id,
+      passwordHash,
+      role: Role.STUDENT,
+      name: 'Aarav Kumar',
+      isActive: true,
+    },
+    create: {
+      schoolId: school.id,
+      email: 'aarav@greenvalley.test',
+      passwordHash,
+      role: Role.STUDENT,
+      name: 'Aarav Kumar',
+      isActive: true,
+    },
+  });
+
+  await prisma.student.update({
+    where: { id: students[0].id },
+    data: { userId: studentUser.id },
+  });
+
+  // ---------------------------------------------------------------------------
   // ATTENDANCE
   // ---------------------------------------------------------------------------
 
@@ -411,6 +439,43 @@ async function main() {
       },
     });
   }
+
+  // ---------------------------------------------------------------------------
+  // EXAM + REPORT CARD DEMO
+  // ---------------------------------------------------------------------------
+
+  const exam =
+    (await prisma.exam.findFirst({
+      where: { academicYearId: academicYear.id, name: 'Term 1' },
+    })) ??
+    (await prisma.exam.create({
+      data: {
+        academicYearId: academicYear.id,
+        name: 'Term 1',
+        startDate: new Date('2026-09-15'),
+        endDate: new Date('2026-09-25'),
+      },
+    }));
+
+  await prisma.examResult.upsert({
+    where: {
+      examId_studentId_subjectId: {
+        examId: exam.id,
+        studentId: students[0].id,
+        subjectId: mathsSubject.id,
+      },
+    },
+    update: { marks: 82, maxMarks: 100, grade: 'A', remarks: 'Strong understanding of linear equations.' },
+    create: {
+      examId: exam.id,
+      studentId: students[0].id,
+      subjectId: mathsSubject.id,
+      marks: 82,
+      maxMarks: 100,
+      grade: 'A',
+      remarks: 'Strong understanding of linear equations.',
+    },
+  });
 
   // ---------------------------------------------------------------------------
   // FEE STRUCTURE

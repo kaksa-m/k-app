@@ -25,6 +25,8 @@ import { FeesModule } from './fees/fees.module';
 import { DashboardModule } from './dashboard/dashboard.module';
 import { PlatformModule } from './platform/platform.module';
 import { ParentPortalModule } from './parent-portal/parent-portal.module';
+import { ExamsModule } from './exams/exams.module';
+import { StudentPortalModule } from './student-portal/student-portal.module';
 
 @Module({
   imports: [
@@ -50,6 +52,8 @@ import { ParentPortalModule } from './parent-portal/parent-portal.module';
     DashboardModule,
     PlatformModule,
     ParentPortalModule,
+    ExamsModule,
+    StudentPortalModule,
   ],
   providers: [
     // Order matters: rate-limit first, then authenticate, then authorize.
