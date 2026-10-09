@@ -40,7 +40,12 @@ export class AcademicYearsService {
       }
 
       return tx.academicYear.create({
-        data: { ...dto, schoolId },
+        data: {
+          ...dto,
+          schoolId,
+          startDate: new Date(dto.startDate),
+          endDate: new Date(dto.endDate),
+        },
       });
     });
   }
@@ -77,7 +82,11 @@ export class AcademicYearsService {
 
       return tx.academicYear.update({
         where: { id },
-        data: dto,
+        data: {
+          ...dto,
+          ...(dto.startDate ? { startDate: new Date(dto.startDate) } : {}),
+          ...(dto.endDate ? { endDate: new Date(dto.endDate) } : {}),
+        },
       });
     });
   }

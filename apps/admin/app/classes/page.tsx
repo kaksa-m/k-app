@@ -16,6 +16,8 @@ export default function ClassesPage() {
   const [showClassForm, setShowClassForm] = useState(false);
   const [className, setClassName] = useState('');
   const [classOrder, setClassOrder] = useState('');
+  const [classSectionNames, setClassSectionNames] = useState('');
+  const [classSectionYear, setClassSectionYear] = useState('');
   const [classFormError, setClassFormError] = useState<string | null>(null);
   const [creatingClass, setCreatingClass] = useState(false);
 
@@ -36,7 +38,10 @@ export default function ClassesPage() {
 
   useEffect(() => {
     load();
-    api.get<AcademicYear[]>('/academic-years').then(setAcademicYears).catch(() => {});
+    api.get<AcademicYear[]>('/academic-years').then((years) => {
+      setAcademicYears(years);
+      setClassSectionYear(years.find((y) => y.isCurrent)?.id ?? years[0]?.id ?? '');
+    }).catch(() => {});
     api.get<Teacher[]>('/teachers').then(setTeachers).catch(() => {});
   }, []);
 
@@ -44,14 +49,34 @@ export default function ClassesPage() {
     e.preventDefault();
     setClassFormError(null);
     setCreatingClass(true);
+    const sectionNames = classSectionNames.split(',').map((name) => name.trim()).filter(Boolean);
+    if (sectionNames.length > 0 && !classSectionYear) {
+      setClassFormError('Select an academic year before adding sections. Create an academic year first if none exists.');
+      setCreatingClass(false);
+      return;
+    }
+    if (new Set(sectionNames.map((name) => name.toLowerCase())).size !== sectionNames.length) {
+      setClassFormError('Section names must be unique. Remove duplicate names from the list.');
+      setCreatingClass(false);
+      return;
+    }
     try {
-      await api.post('/classes', { name: className, order: Number(classOrder) });
+      const created = await api.post<{ id: string }>('/classes', { name: className.trim(), order: Number(classOrder) });
+      for (const name of sectionNames) {
+        await api.post('/sections', {
+          classId: created.id,
+          academicYearId: classSectionYear,
+          name,
+        });
+      }
       setClassName('');
       setClassOrder('');
+      setClassSectionNames('');
       setShowClassForm(false);
       load();
     } catch (err) {
-      setClassFormError(err instanceof ApiError ? err.message : 'Failed to create class.');
+      setClassFormError(err instanceof ApiError ? err.message : 'Failed to create class or one of its sections.');
+      load();
     } finally {
       setCreatingClass(false);
     }
@@ -119,6 +144,27 @@ export default function ClassesPage() {
                 />
               </Field>
             </div>
+            <Field label="Section names (optional, comma-separated)">
+              <TextInput
+                value={classSectionNames}
+                onChange={(e) => setClassSectionNames(e.target.value)}
+                placeholder="Earth, Mars, Jupiter"
+              />
+            </Field>
+            {classSectionNames.trim() && (
+              <Field label="Academic year for these sections">
+                <Select required value={classSectionYear} onChange={(e) => setClassSectionYear(e.target.value)}>
+                  <option value="" disabled>Select academic year…</option>
+                  {academicYears.map((year) => (
+                    <option key={year.id} value={year.id}>{year.name}{year.isCurrent ? ' (Current)' : ''}</option>
+                  ))}
+                </Select>
+                {academicYears.length === 0 && (
+                  <span className="text-xs text-margin">Create an academic year before creating sections.</span>
+                )}
+              </Field>
+            )}
+            <p className="text-xs text-ink-soft">Example section names: Earth, Mars, Jupiter. Separate each name with a comma.</p>
             <ErrorText>{classFormError}</ErrorText>
             <div className="flex gap-3">
               <PrimaryButton type="submit" disabled={creatingClass}>

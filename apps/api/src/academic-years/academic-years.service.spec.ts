@@ -48,6 +48,9 @@ describe('AcademicYearsService', () => {
       where: { schoolId: 'school-a', isCurrent: true },
       data: { isCurrent: false },
     });
+    const createCall = prisma.academicYear.create.mock.calls[0][0];
+    expect(createCall.data.startDate).toEqual(new Date('2027-06-01'));
+    expect(createCall.data.endDate).toEqual(new Date('2028-04-30'));
   });
 
   it('does not allow deleting the current year', async () => {
