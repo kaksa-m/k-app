@@ -19,6 +19,24 @@ export class FeesService {
     return this.prisma.feeStructure.findMany({ where: { schoolId }, orderBy: { name: 'asc' } });
   }
 
+  async updateStructure(schoolId: string, id: string, dto: CreateFeeStructureDto) {
+    const existing = await this.prisma.feeStructure.findFirst({ where: { id, schoolId } });
+    if (!existing) throw new NotFoundException('Fee structure not found.');
+    return this.prisma.feeStructure.update({ where: { id }, data: dto });
+  }
+
+  async deleteStructure(schoolId: string, id: string) {
+    const existing = await this.prisma.feeStructure.findFirst({
+      where: { id, schoolId },
+      include: { _count: { select: { invoices: true } } },
+    });
+    if (!existing) throw new NotFoundException('Fee structure not found.');
+    if (existing._count.invoices > 0) {
+      throw new BadRequestException('This fee structure is linked to invoices and cannot be deleted. Edit it instead, or only delete unused fee structures.');
+    }
+    return this.prisma.feeStructure.delete({ where: { id } });
+  }
+
   // ---- Invoices ----
 
   async createInvoice(schoolId: string, dto: CreateInvoiceDto) {

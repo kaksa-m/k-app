@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Post, Query } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Patch, Post, Query } from '@nestjs/common';
 import { FeesService } from './fees.service';
 import { CreateFeeStructureDto } from './dto/create-fee-structure.dto';
 import { CreateInvoiceDto } from './dto/create-invoice.dto';
@@ -21,6 +21,22 @@ export class FeesController {
   @Get('structures')
   findStructures(@CurrentUser() user: AuthenticatedUser) {
     return this.service.findStructures(user.schoolId!);
+  }
+
+  @Roles(Role.SCHOOL_ADMIN, Role.ACCOUNTANT)
+  @Patch('structures/:id')
+  updateStructure(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param('id') id: string,
+    @Body() dto: CreateFeeStructureDto,
+  ) {
+    return this.service.updateStructure(user.schoolId!, id, dto);
+  }
+
+  @Roles(Role.SCHOOL_ADMIN, Role.ACCOUNTANT)
+  @Delete('structures/:id')
+  deleteStructure(@CurrentUser() user: AuthenticatedUser, @Param('id') id: string) {
+    return this.service.deleteStructure(user.schoolId!, id);
   }
 
   @Roles(Role.SCHOOL_ADMIN, Role.ACCOUNTANT)
